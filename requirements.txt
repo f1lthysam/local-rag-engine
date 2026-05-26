@@ -1,4 +1,7 @@
 pypdf
+requests
+beautifulsoup4
+markdownify
 langchain
 langchain-community
 langchain-chroma

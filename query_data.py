@@ -8,15 +8,19 @@ import logging
 logging.disable(logging.CRITICAL)
 
 import argparse
-from langchain_chroma import Chroma
-from langchain_core.prompts import ChatPromptTemplate
-from langchain_ollama import OllamaLLM
-
-from get_embedding_function import get_embedding_function
+from pathlib import Path
+import re
+import time
 
 CHROMA_PATH = "chroma"
+DATA_PATH = "data"
 THRESHOLD = 1.6  # L2 distance cutoff for relevant chunks.
 MIN_CONFIDENCE = 65.0  # Confidence shown for answers right at the cutoff.
+DEFAULT_K = 3
+MAX_CONTEXT_CHARS = 2500
+_DB = None
+_PROMPT_TEMPLATE = None
+_OLLAMA_MODEL = None
 
 PROMPT_TEMPLATE = """
 Answer the question using ONLY the following context.
@@ -34,17 +38,73 @@ Question: {question}
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("query_text", type=str, help="The query text.")
+    parser.add_argument("query_text", nargs="?", type=str, help="The query text.")
+    parser.add_argument("--k", type=int, default=DEFAULT_K, help="Number of chunks to retrieve.")
+    parser.add_argument("--debug", action="store_true", help="Print retrieval and model timing.")
+    parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="Only retrieve matching chunks. Skips local Ollama generation.",
+    )
+    parser.add_argument(
+        "--force-rag",
+        action="store_true",
+        help="Skip direct Markdown fact lookup and always use vector retrieval.",
+    )
+    parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Keep models loaded and answer multiple questions in one process.",
+    )
     args = parser.parse_args()
-    query_rag(args.query_text)
+
+    if args.interactive:
+        run_interactive(args.k, args.debug, args.no_llm, args.force_rag)
+        return
+
+    if not args.query_text:
+        parser.error("query_text is required unless --interactive is used.")
+
+    query_rag(
+        args.query_text,
+        k=args.k,
+        debug=args.debug,
+        no_llm=args.no_llm,
+        force_rag=args.force_rag,
+    )
 
 
-def query_rag(query_text: str):
-    embedding_function = get_embedding_function()
-    db = Chroma(persist_directory=CHROMA_PATH, embedding_function=embedding_function)
+def query_rag(
+    query_text: str,
+    k: int = DEFAULT_K,
+    debug: bool = False,
+    no_llm: bool = False,
+    force_rag: bool = False,
+):
+    start_time = time.perf_counter()
 
-    results = db.similarity_search_with_score(query_text, k=5)
-    print([score for _, score in results])
+    if not force_rag:
+        direct_answer = find_direct_markdown_answer(query_text)
+        if direct_answer:
+            answer, source = direct_answer
+            if debug:
+                print(f"Direct Markdown lookup: {time.perf_counter() - start_time:.2f}s")
+            print(f"\nResponse: {answer}")
+            print("Confidence: 100.0%")
+            print(f"Sources:  ['{source}']\n")
+            return answer
+
+    db = get_vector_db()
+    embedding_ready_time = time.perf_counter()
+    db_ready_time = time.perf_counter()
+
+    results = db.similarity_search_with_score(query_text, k=k)
+    retrieval_done_time = time.perf_counter()
+    if debug:
+        print(f"Embedding setup: {embedding_ready_time - start_time:.2f}s")
+        print(f"Chroma setup: {db_ready_time - embedding_ready_time:.2f}s")
+        print(f"Retrieval: {retrieval_done_time - db_ready_time:.2f}s")
+        print(f"Scores: {[score for _, score in results]}")
 
     if not results or results[0][1] > THRESHOLD:
         print("\nResponse: I don't have information about that in my documents.")
@@ -58,14 +118,26 @@ def query_rag(query_text: str):
         for doc, score in results
         if score <= THRESHOLD and doc.metadata.get("source") == top_source
     ]
-    context_text = "\n\n---\n\n".join(
-        [doc.page_content for doc, _score in relevant_results]
-    )
-    prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in relevant_results])
+    context_text = context_text[:MAX_CONTEXT_CHARS]
+
+    if no_llm:
+        sources = [doc.metadata.get("id", None) for doc, _score in relevant_results]
+        print("\nRetrieved Context:\n")
+        print(context_text)
+        print(f"\nSources:  {sources}\n")
+        return context_text
+
+    prompt_template = get_prompt_template()
     prompt = prompt_template.format(context=context_text, question=query_text)
 
-    model = OllamaLLM(model="phi", temperature=0.5)
+    model = get_ollama_model()
     response_text = model.invoke(prompt)
+    llm_done_time = time.perf_counter()
+
+    if debug:
+        print(f"LLM generation: {llm_done_time - retrieval_done_time:.2f}s")
+        print(f"Total: {llm_done_time - start_time:.2f}s")
 
     best_score = results[0][1]
     confidence = distance_to_confidence(best_score)
@@ -78,11 +150,103 @@ def query_rag(query_text: str):
     return response_text
 
 
+def run_interactive(k: int, debug: bool, no_llm: bool, force_rag: bool):
+    print("Interactive RAG mode. Type 'exit' or 'quit' to stop.")
+    while True:
+        query_text = input("\nQuestion: ").strip()
+        if query_text.lower() in {"exit", "quit"}:
+            break
+        if not query_text:
+            continue
+        query_rag(query_text, k=k, debug=debug, no_llm=no_llm, force_rag=force_rag)
+
+
+def get_vector_db():
+    global _DB
+    if _DB is None:
+        from langchain_chroma import Chroma
+        from get_embedding_function import get_embedding_function
+
+        _DB = Chroma(
+            persist_directory=CHROMA_PATH,
+            embedding_function=get_embedding_function(),
+        )
+    return _DB
+
+
+def get_prompt_template():
+    global _PROMPT_TEMPLATE
+    if _PROMPT_TEMPLATE is None:
+        from langchain_core.prompts import ChatPromptTemplate
+
+        _PROMPT_TEMPLATE = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+    return _PROMPT_TEMPLATE
+
+
+def get_ollama_model():
+    global _OLLAMA_MODEL
+    if _OLLAMA_MODEL is None:
+        from langchain_ollama import OllamaLLM
+
+        _OLLAMA_MODEL = OllamaLLM(model="phi", temperature=0)
+    return _OLLAMA_MODEL
+
+
 def distance_to_confidence(distance: float) -> float:
     """Convert Chroma's L2 distance into a user-facing confidence percentage."""
     distance = max(0.0, min(THRESHOLD, distance))
     confidence_range = 100.0 - MIN_CONFIDENCE
     return 100.0 - (distance / THRESHOLD) * confidence_range
+
+
+def find_direct_markdown_answer(query_text: str):
+    role = extract_role_from_query(query_text)
+    if not role:
+        return None
+
+    role_pattern = re.compile(
+        rf"^{re.escape(role)}\s+of\s+.+?:\s*(?P<name>.+?)\.?$",
+        re.IGNORECASE,
+    )
+    table_pattern = re.compile(
+        rf"^\|\s*(?P<name>[^|]+?)\s*\|\s*{re.escape(role)}\s*\|",
+        re.IGNORECASE,
+    )
+
+    for path in Path(DATA_PATH).glob("*.md"):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+
+            role_match = role_pattern.match(line)
+            if role_match:
+                name = role_match.group("name").strip()
+                return f"The {role} is {name}.", path.as_posix()
+
+            table_match = table_pattern.match(line)
+            if table_match:
+                name = table_match.group("name").strip()
+                return f"The {role} is {name}.", path.as_posix()
+
+    return None
+
+
+def extract_role_from_query(query_text: str):
+    role_match = re.search(
+        r"\b(CEO|CFO|CMO|CTO|COO|Chief Executive Officer|Chief Financial Officer|Chief Marketing Officer|Chief Technology Officer)\b",
+        query_text,
+        re.IGNORECASE,
+    )
+    if not role_match:
+        return None
+
+    role = role_match.group(1).upper()
+    role_aliases = {
+        "CHIEF EXECUTIVE OFFICER": "CEO",
+        "CHIEF FINANCIAL OFFICER": "CFO",
+        "CHIEF MARKETING OFFICER": "CMO",
+        "CHIEF TECHNOLOGY OFFICER": "CTO",
+    }
+    return role_aliases.get(role, role)
 
 
 if __name__ == "__main__":

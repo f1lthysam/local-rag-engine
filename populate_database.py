@@ -39,13 +39,13 @@ def main():
 
 def load_documents():
     pdf_loader = PyPDFDirectoryLoader(DATA_PATH)
-    txt_loader = DirectoryLoader(
+    markdown_loader = DirectoryLoader(
         DATA_PATH,
-        glob="*.txt",
+        glob="*.md",
         loader_cls=TextLoader,
         loader_kwargs={"encoding": "utf-8"},
     )
-    return pdf_loader.load() + txt_loader.load()
+    return pdf_loader.load() + markdown_loader.load()
 
 
 def split_documents(documents: list[Document]):

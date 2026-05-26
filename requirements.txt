@@ -2,6 +2,7 @@ pypdf
 requests
 beautifulsoup4
 markdownify
+flask
 langchain
 langchain-community
 langchain-chroma

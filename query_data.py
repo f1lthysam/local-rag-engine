@@ -150,6 +150,51 @@ def query_rag(
     return response_text
 
 
+def query_rag_web(query_text: str):
+    direct_answer = find_direct_markdown_answer(query_text)
+    if direct_answer:
+        answer, source = direct_answer
+        return {
+            "response": answer,
+            "confidence": 100.0,
+            "sources": [source],
+            "no_info": False,
+        }
+
+    db = get_vector_db()
+    results = db.similarity_search_with_score(query_text, k=DEFAULT_K)
+
+    if not results or results[0][1] > THRESHOLD:
+        return {
+            "response": "I don't have information about that in my documents.",
+            "confidence": None,
+            "sources": [],
+            "no_info": True,
+        }
+
+    top_source = results[0][0].metadata.get("source")
+    relevant_results = [
+        (doc, score)
+        for doc, score in results
+        if score <= THRESHOLD and doc.metadata.get("source") == top_source
+    ]
+    context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in relevant_results])
+    context_text = context_text[:MAX_CONTEXT_CHARS]
+
+    prompt = get_prompt_template().format(context=context_text, question=query_text)
+    response_text = get_ollama_model().invoke(prompt)
+
+    confidence = round(distance_to_confidence(results[0][1]), 1)
+    sources = [doc.metadata.get("id", None) for doc, _score in relevant_results]
+
+    return {
+        "response": response_text,
+        "confidence": confidence,
+        "sources": sources,
+        "no_info": False,
+    }
+
+
 def run_interactive(k: int, debug: bool, no_llm: bool, force_rag: bool):
     print("Interactive RAG mode. Type 'exit' or 'quit' to stop.")
     while True:

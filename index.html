@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RAG Query</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0e0e0e;
+      --surface:   #161616;
+      --border:    #2a2a2a;
+      --text:      #e8e8e8;
+      --muted:     #5a5a5a;
+      --accent:    #d4a84b;
+      --danger:    #c0392b;
+      --success:   #27ae60;
+      --mono:      'IBM Plex Mono', monospace;
+      --sans:      'IBM Plex Sans', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ── Header ── */
+    header {
+      padding: 36px 0 28px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+    header h1 {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    header p {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    /* ── Form ── */
+    .query-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 16px;
+      resize: vertical;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    textarea::placeholder { color: var(--muted); }
+    textarea:focus { border-color: var(--accent); }
+
+    .form-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .hint {
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    button[type="submit"] {
+      background: var(--accent);
+      color: #0e0e0e;
+      border: none;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    button[type="submit"]:hover { opacity: 0.85; }
+    button[type="submit"]:active { opacity: 0.7; }
+
+    /* ── Result block ── */
+    .result {
+      margin-top: 40px;
+      border-top: 1px solid var(--border);
+      padding-top: 32px;
+    }
+
+    .result-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+    }
+
+    .response-text {
+      font-size: 15px;
+      line-height: 1.75;
+      color: var(--text);
+      white-space: pre-wrap;
+      margin-bottom: 28px;
+    }
+
+    /* ── Meta row (confidence + sources) ── */
+    .meta {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .confidence-bar-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .confidence-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .confidence-header span:first-child {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .confidence-value {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .bar-track {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+      background: var(--accent);
+      transition: width 0.4s ease;
+    }
+
+    .sources-block { }
+    .sources-block .result-label { margin-bottom: 8px; }
+    .source-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .source-list li {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      padding: 6px 10px;
+      background: var(--surface);
+      border-left: 2px solid var(--border);
+    }
+
+    /* ── No-info state ── */
+    .no-info {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--muted);
+      padding: 16px;
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--danger);
+      border-radius: 3px;
+    }
+
+    /* ── Query echo ── */
+    .query-echo {
+      margin-bottom: 24px;
+    }
+    .query-echo .result-label { margin-bottom: 6px; }
+    .query-echo p {
+      font-family: var(--mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: auto;
+      padding: 28px 0 20px;
+      border-top: 1px solid var(--border);
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <header>
+    <h1>RAG &mdash; Query Interface</h1>
+    <p>Local document search &middot; {{ model }}</p>
+  </header>
+
+  <form class="query-form" method="POST" action="/">
+    <textarea
+      name="query"
+      placeholder="Ask anything from your documents..."
+      autofocus
+    >{{ query or '' }}</textarea>
+    <div class="form-row">
+      <span class="hint">Searches: PDFs + scraped text in /data</span>
+      <button type="submit">Run query</button>
+    </div>
+  </form>
+
+  {% if result %}
+  <div class="result">
+
+    <div class="query-echo">
+      <div class="result-label">Query</div>
+      <p>{{ query }}</p>
+    </div>
+
+    {% if result.no_info %}
+      <div class="no-info">No relevant information found in documents.</div>
+    {% else %}
+
+      <div class="result-label">Response</div>
+      <div class="response-text">{{ result.response }}</div>
+
+      <div class="meta">
+        {% if result.confidence is not none %}
+        <div class="confidence-bar-wrap">
+          <div class="confidence-header">
+            <span>Confidence</span>
+            <span class="confidence-value"
+              style="color: {% if result.confidence >= 50 %}var(--success){% elif result.confidence >= 30 %}var(--accent){% else %}var(--danger){% endif %}">
+              {{ result.confidence }}%
+            </span>
+          </div>
+          <div class="bar-track">
+            <div class="bar-fill" style="width: {{ result.confidence }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        {% if result.sources %}
+        <div class="sources-block">
+          <div class="result-label">Sources</div>
+          <ul class="source-list">
+            {% for s in result.sources %}
+              <li>{{ s }}</li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% endif %}
+      </div>
+
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <footer>rag-tutorial-v2 &middot; chromadb + ollama</footer>
+
+</div>
+</body>
+</html>

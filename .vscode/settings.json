@@ -1,4 +1,7 @@
 {
-  "python.defaultInterpreterPath": "D:\\Soham\\rag_chatbot\\rag-tutorial-v2-main\\venv\\Scripts\\python.exe",
-  "python.terminal.activateEnvironment": true
+  "python.defaultInterpreterPath": "${workspaceFolder}\\venv\\Scripts\\python.exe",
+  "python.terminal.activateEnvironment": true,
+  "terminal.integrated.env.windows": {
+    "PATH": "${workspaceFolder}\\venv\\Scripts;${env:PATH}"
+  }
 }

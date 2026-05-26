@@ -9,7 +9,11 @@ logging.disable(logging.CRITICAL)
 
 import argparse
 import shutil
-from langchain_community.document_loaders import DirectoryLoader, PyPDFDirectoryLoader
+from langchain_community.document_loaders import (
+    DirectoryLoader,
+    PyPDFDirectoryLoader,
+    TextLoader,
+)
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_core.documents import Document
 from langchain_chroma import Chroma
@@ -25,7 +29,7 @@ def main():
     parser.add_argument("--reset", action="store_true", help="Reset the database.")
     args = parser.parse_args()
     if args.reset:
-        print("✨ Clearing Database")
+        print("Clearing database")
         clear_database()
 
     documents = load_documents()
@@ -35,7 +39,12 @@ def main():
 
 def load_documents():
     pdf_loader = PyPDFDirectoryLoader(DATA_PATH)
-    txt_loader = DirectoryLoader(DATA_PATH, glob="*.txt")
+    txt_loader = DirectoryLoader(
+        DATA_PATH,
+        glob="*.txt",
+        loader_cls=TextLoader,
+        loader_kwargs={"encoding": "utf-8"},
+    )
     return pdf_loader.load() + txt_loader.load()
 
 
@@ -63,10 +72,10 @@ def add_to_chroma(chunks: list[Document]):
     new_chunks = [c for c in chunks_with_ids if c.metadata["id"] not in existing_ids]
 
     if new_chunks:
-        print(f"👉 Adding new documents: {len(new_chunks)}")
+        print(f"Adding new documents: {len(new_chunks)}")
         db.add_documents(new_chunks, ids=[c.metadata["id"] for c in new_chunks])
     else:
-        print("✅ No new documents to add")
+        print("No new documents to add")
 
 
 def calculate_chunk_ids(chunks):

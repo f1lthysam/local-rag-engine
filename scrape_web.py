@@ -61,6 +61,6 @@ if __name__ == "__main__":
     # ── Multiple URLs ───────────────────────────────────────────
     urls = {
         "example1.txt": "https://aliansoftware.com/en",
-        # "example2.txt": "https://example.com/page2",
+        "example2.txt": "https://aliansoftware.com/en/about",
     }
     scrape_multiple(urls)

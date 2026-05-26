@@ -54,7 +54,7 @@ def query_rag(query_text: str):
     prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
     prompt = prompt_template.format(context=context_text, question=query_text)
 
-    model = OllamaLLM(model="phi")
+    model = OllamaLLM(model="phi", temperature=0.1)
     response_text = model.invoke(prompt)
 
     best_score = results[0][1]

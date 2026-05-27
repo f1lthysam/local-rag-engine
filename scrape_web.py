@@ -84,5 +84,6 @@ if __name__ == "__main__":
         "example3.md": "https://aliansoftware.com/en/work",
         "example4.md": "https://aliansoftware.com/en/pricing",
         "example5.md": "https://aliansoftware.com/en/blog",
+        "example6.md": "https://bvmengineering.ac.in/",
     }
     scrape_multiple(urls)

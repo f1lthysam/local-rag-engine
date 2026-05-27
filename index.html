@@ -31,7 +31,6 @@
       line-height: 1.6;
     }
 
-    /* ── Layout ── */
     .shell {
       min-height: 100vh;
       display: flex;
@@ -41,7 +40,6 @@
       padding: 0 24px;
     }
 
-    /* ── Header ── */
     header {
       padding: 36px 0 28px;
       border-bottom: 1px solid var(--border);
@@ -62,42 +60,13 @@
       font-family: var(--mono);
     }
 
-    /* ── Form ── */
-    .query-form {
+    .query-form, .ingest-form {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-
-    textarea,
-    input[type="url"] {
-      width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 4px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 15px;
-      line-height: 1.6;
-      padding: 16px;
-      resize: vertical;
-      outline: none;
-      transition: border-color 0.15s;
-    }
-    textarea { min-height: 110px; }
-    input[type="url"] {
-      min-height: 44px;
-      resize: none;
-    }
-    textarea::placeholder,
-    input[type="url"]::placeholder { color: var(--muted); }
-    textarea:focus,
-    input[type="url"]:focus { border-color: var(--accent); }
 
     .ingest-form {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
       border-bottom: 1px solid var(--border);
       padding-bottom: 28px;
       margin-bottom: 28px;
@@ -110,6 +79,24 @@
       text-transform: uppercase;
       color: var(--muted);
     }
+
+    textarea, input[type="url"] {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      padding: 16px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+    textarea { min-height: 110px; resize: vertical; }
+    input[type="url"] { min-height: 44px; resize: none; }
+    textarea::placeholder, input[type="url"]::placeholder { color: var(--muted); }
+    textarea:focus, input[type="url"]:focus { border-color: var(--accent); }
 
     .form-row {
       display: flex;
@@ -140,7 +127,6 @@
     button[type="submit"]:hover { opacity: 0.85; }
     button[type="submit"]:active { opacity: 0.7; }
 
-    /* ── Result block ── */
     .result {
       margin-top: 40px;
       border-top: 1px solid var(--border);
@@ -164,25 +150,23 @@
       margin-bottom: 28px;
     }
 
-    /* ── Meta row (confidence + sources) ── */
     .meta {
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
+    /* Confidence bar */
     .confidence-bar-wrap {
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
-
     .confidence-header {
       display: flex;
       justify-content: space-between;
       align-items: baseline;
     }
-
     .confidence-header span:first-child {
       font-family: var(--mono);
       font-size: 11px;
@@ -190,29 +174,60 @@
       text-transform: uppercase;
       color: var(--muted);
     }
-
     .confidence-value {
       font-family: var(--mono);
       font-size: 13px;
       font-weight: 500;
     }
-
     .bar-track {
       height: 3px;
       background: var(--border);
       border-radius: 2px;
       overflow: hidden;
     }
-
     .bar-fill {
       height: 100%;
       border-radius: 2px;
       background: var(--accent);
-      transition: width 0.4s ease;
     }
 
-    .sources-block { }
-    .sources-block .result-label { margin-bottom: 8px; }
+    /* Stats row — latency + tokens */
+    .stats-row {
+      display: flex;
+      gap: 24px;
+      flex-wrap: wrap;
+    }
+    .stat-item {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .stat-item .result-label { margin-bottom: 0; }
+    .stat-value {
+      font-family: var(--mono);
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text);
+    }
+
+    /* Token breakdown */
+    .token-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+    .token-breakdown .result-label { margin-bottom: 0; }
+    .token-detail {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .token-detail span {
+      color: var(--text);
+      font-weight: 500;
+    }
+
+    /* Sources */
     .source-list {
       list-style: none;
       display: flex;
@@ -228,7 +243,6 @@
       border-left: 2px solid var(--border);
     }
 
-    /* ── No-info state ── */
     .no-info {
       font-family: var(--mono);
       font-size: 13px;
@@ -239,7 +253,6 @@
       border-radius: 3px;
     }
 
-    /* ── Query echo ── */
     .notice {
       margin-bottom: 28px;
       border: 1px solid var(--border);
@@ -249,25 +262,13 @@
       line-height: 1.5;
     }
     .notice.success { border-color: var(--success); color: var(--success); }
-    .notice.error { border-color: var(--danger); color: var(--danger); }
-    .notice span {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      word-break: break-word;
-    }
+    .notice.error   { border-color: var(--danger);  color: var(--danger);  }
+    .notice span { display: block; margin-top: 4px; color: var(--muted); word-break: break-word; }
 
-    .query-echo {
-      margin-bottom: 24px;
-    }
+    .query-echo { margin-bottom: 24px; }
     .query-echo .result-label { margin-bottom: 6px; }
-    .query-echo p {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--text);
-    }
+    .query-echo p { font-family: var(--mono); font-size: 13px; color: var(--text); }
 
-    /* ── Footer ── */
     footer {
       margin-top: auto;
       padding: 28px 0 20px;
@@ -288,12 +289,7 @@
 
   <form class="ingest-form" method="POST" action="/ingest-url">
     <div class="section-label">Add website</div>
-    <input
-      type="url"
-      name="url"
-      placeholder="https://example.com/page"
-      value="{{ url or '' }}"
-    />
+    <input type="url" name="url" placeholder="https://example.com/page" value="{{ url or '' }}"/>
     <div class="form-row">
       <span class="hint">Scrapes this page into /data and indexes it in Chroma</span>
       <button type="submit">Scrape URL</button>
@@ -309,11 +305,7 @@
 
   <form class="query-form" method="POST" action="/">
     <div class="section-label">Ask documents</div>
-    <textarea
-      name="query"
-      placeholder="Ask anything from your documents..."
-      autofocus
-    >{{ query or '' }}</textarea>
+    <textarea name="query" placeholder="Ask anything from your documents..." autofocus>{{ query or '' }}</textarea>
     <div class="form-row">
       <span class="hint">Searches: PDFs + scraped text in /data</span>
       <button type="submit">Run query</button>
@@ -330,12 +322,21 @@
 
     {% if result.no_info %}
       <div class="no-info">No relevant information found in documents.</div>
+      {% if result.latency is not none %}
+      <div class="stats-row" style="margin-top:16px;">
+        <div class="stat-item">
+          <div class="result-label">Latency</div>
+          <div class="stat-value">{{ result.latency }}s</div>
+        </div>
+      </div>
+      {% endif %}
     {% else %}
 
       <div class="result-label">Response</div>
       <div class="response-text">{{ result.response }}</div>
 
       <div class="meta">
+
         {% if result.confidence is not none %}
         <div class="confidence-bar-wrap">
           <div class="confidence-header">
@@ -351,6 +352,25 @@
         </div>
         {% endif %}
 
+        <!-- Latency + Tokens row -->
+        <div class="stats-row">
+          {% if result.latency is not none %}
+          <div class="stat-item">
+            <div class="result-label">Latency</div>
+            <div class="stat-value">{{ result.latency }}s</div>
+          </div>
+          {% endif %}
+
+          {% if result.total_tokens is not none %}
+          <div class="token-breakdown">
+            <div class="result-label">Tokens</div>
+            <div class="token-detail">Prompt &nbsp;&nbsp;<span>{{ result.prompt_tokens }}</span></div>
+            <div class="token-detail">Response <span>{{ result.response_tokens }}</span></div>
+            <div class="token-detail">Total &nbsp;&nbsp;&nbsp;<span>{{ result.total_tokens }}</span></div>
+          </div>
+          {% endif %}
+        </div>
+
         {% if result.sources %}
         <div class="sources-block">
           <div class="result-label">Sources</div>
@@ -361,8 +381,8 @@
           </ul>
         </div>
         {% endif %}
-      </div>
 
+      </div>
     {% endif %}
   </div>
   {% endif %}

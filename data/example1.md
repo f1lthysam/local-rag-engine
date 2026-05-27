@@ -1,75 +1,210 @@
 Source: https://aliansoftware.com/en
 
-# Alian AI - Tell us your problem. We'll architect the AI that solves it.
+Alian AI — Tell us your problem. We'll architect the AI that solves it.Skip to content
 
-Every business has a workflow that's begging for AI. Type yours below - our agent will scope a solution in seconds. Then talk to a human to build it.
+#
 
-Engineered by the team behind Alian Software - 15+ years shipping enterprise systems.
+Every business has a workflow that's begging for AI. Type yours below — our agent will scope a solution in seconds. Then talk to a human to build it.
 
-## How we work
+Engineered by the team behind Alian Software · 15+ years shipping enterprise systems
 
-From "we have a problem" to live in production. Most engagements ship in 4-6 weeks.
+- ![Tern Travel](/clients/tern.svg)
+- ![Minimalist](/clients/minimalist.svg)
+- ![Rishta](/clients/rishta.svg)
+- ![Erfolg](/clients/erfolg.svg)
+- ![Svang](/clients/svang.svg)
+- ![Tutorline](/clients/tutorline.svg)
 
-| Stage | Description |
-| --- | --- |
-| Day 0 | Discovery call - 20 min. We listen, we ask, we scope. |
-| Day 7 | Scope and SOW - fixed price, no surprises. |
-| Week 4-6 | Build and weekly demos - senior engineering team, working code from day one. |
-| Week 6+ | Live and iterating - your team owns it, and we support if you want us to. |
+Live agent activity
 
-## What we build
+- LEADLead qualification agent → routed inquiry to AE18s ago
+- SUPPORTAuto-resolution: ticket #4729 fixed and PR merged12s ago
+- MANUFACTURINGProduction monitor flagged drift on machine 146s ago
 
-### AI Agents and Automation
+How we work
 
-Lead-qualification agents, support agents, ops automation, n8n, LangGraph, and voice agents.
+## From "we have a problem" to live in production. The whole arc.
 
-### Custom AI Apps and Chatbots
+Most engagements ship in 4–6 weeks. Here's the timeline.
 
-RAG-powered chatbots, knowledge bases, and custom LLM apps. Production-grade, branded, and multitenant.
+- Day 0
 
-### AI Strategy and Enablement
+### Discovery call
 
-AI roadmap, governance, and team training for leaders figuring out where AI fits in the next 12 months.
+20 min · We listen, we ask, we scope.
+- Day 7
 
-### Data and Intelligence
+### Scope & SOW
 
-Predictive ML, computer vision, and generative content pipelines that turn data into decisions.
+Fixed price · No surprises.
+- Week 4–6
 
-## Real builds
+### Build & weekly demos
+
+Senior engineering team · Working code from day one.
+- Week 6+
+
+### Live & iterating
+
+Your team owns it · We support if you want us to.
+
+Start at Day 0 →
+
+What we build
+
+## Whatever the problem looks like, one of these is the solution.
+
+- ### AI Agents & Automation
+
+When your business needs hands that don't sleep.
+
+Lead-qualification agents, support agents, ops automation. n8n, LangGraph, voice agents.
+
+Learn more →
+- ### Custom AI Apps & Chatbots
+
+When your users need answers they can ask for.
+
+RAG-powered chatbots, knowledge bases, custom LLM apps. Production-grade, branded, multitenant.
+
+›
+
+Learn more →
+- ### AI Strategy & Enablement
+
+When you need a plan before a build.
+
+AI roadmap, governance, team training. For leaders figuring out where AI fits in the next 12 months.
+
+Data readiness—
+
+Use-case clarity—
+
+Team enablement—
+
+Learn more →
+- ### Data & Intelligence
+
+When your data is begging to be useful.
+
+Predictive ML, computer vision, generative content pipelines. Turn data into decisions.
+
+Learn more →
+
+Real builds
+
+## Real problems. Real builds. Real numbers.
+
+- Production
+- Maintenance
+- Quality
+- Inventory
+- Energy
+- Briefing
+
+ManufacturingAgents & Automation
 
 ### Multi-Agent System for 24/7 Manufacturing Plant
 
-- Industry: Manufacturing
-- Category: Agents and Automation
-- Result: 31% reduction in unplanned downtime in 90 days
-- Impact: 8x faster anomaly detection, 0 stockouts compared with 7 prior, and 9% energy savings
+31%
 
-Six specialized agents watch production, maintenance, quality, inventory, energy, and shift handoffs while coordinating through a shared event bus and alerting humans via WhatsApp.
+Reduction in unplanned downtime · 90 days
 
-## Why teams choose us
+Six specialized agents watching production, maintenance, quality, inventory, energy, and shift handoffs — coordinating through a shared event bus, alerting humans via WhatsApp.
 
-- Production-ready in 6 weeks.
-- Backed by Alian Software's engineering bench.
-- 15+ years of enterprise software DNA.
-- No juniors on your project.
-- Your data, your models, your IP.
-- Code transferred on day one.
-- Globally competitive rates starting at $25/hr.
+- 8×
 
-## What clients say
+faster anomaly detection
+- 0
 
-> I expected a fancy dashboard. What we got was a team of agents that quietly do the watching so my humans can focus on doing.
+stockouts (vs 7 prior)
+- 9%
 
-Plant Operations Manager, manufacturing client.
+energy savings
 
-> The first time I saw a Claude-Code-authored PR ship to production with no human edits, I was nervous. 90 days later I think about it the same way I think about any other contributor.
+Read the full case study →
 
-VP of Engineering, B2B SaaS.
+Why teams choose us
 
-> The agent qualifies better than my junior SDRs because it never has a bad day. And when it doesn't know, it knows it doesn't know - and routes to a human.
+## Engineering rigor, agency speed, global pricing.
 
-VP of Sales, B2B SaaS.
+- ### Production-ready in 6 weeks.
 
-## Call to action
+We ship working code from week one — not slides, not theory.
+- ### Backed by Alian Software's engineering bench.
 
-Stop describing the problem. Let's build the solution. Book a 20-minute call.
+15+ years of enterprise software DNA. No juniors on your project.
+- ### Your data, your models, your IP.
+
+Code transferred on day one. Prompts, agents, configs — all yours to own and extend.
+- ### Globally competitive rates · starting at $25/hr.
+
+Engineered in India, shipping globally. Same senior talent at a fraction of the SF rate.
+
+What clients say
+
+## Three quotes from the people writing the renewal checks.
+
+- > "I expected a fancy dashboard. What we got was a team of agents that quietly do the watching so my humans can focus on doing."
+
+Plant Operations Manager
+
+Manufacturing client
+
+Multi-agent operations system · 31% downtime reduction
+- > "The first time I saw a Claude-Code-authored PR ship to production with no human edits, I was nervous. 90 days later I think about it the same way I think about any other contributor."
+
+VP of Engineering
+
+B2B SaaS · DevTools
+
+Auto-resolution chatbot + Claude Code
+- > "The agent qualifies better than my junior SDRs because it never has a bad day. And when it doesn't know, it knows it doesn't know — and routes to a human."
+
+VP of Sales
+
+B2B SaaS
+
+Lead qualification agent · 47% more demos
+
+See all client quotes →
+
+- 0
+
+Problems typed this week
+- 0 days
+
+Average build time per sprint
+- 0%
+
+Retainer renewal rate
+- $0/hr
+
+Starting hourly rate
+
+## Stop describing the problem. Let's build the solution.
+
+20-minute call. No deck. We'll tell you what's possible — and what isn't.
+
+Tell us your problem ↑Book a 20-min call →
+
+- ![Google](/trust-badges/google.svg)
+
+4.3
+- ![Upwork](/trust-badges/upwork.svg)
+
+99% Job Success
+
+Top rated Plus
+- ![Envato](/trust-badges/envato.svg)
+
+4.5
+- ![Clutch](/trust-badges/clutch.svg)
+
+4.9
+- ![Goodfirms](/trust-badges/goodfirms.svg)
+
+5.0
+- ![Glassdoor](/trust-badges/glassdoor.svg)
+
+4.0

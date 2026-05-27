@@ -69,9 +69,9 @@
       gap: 12px;
     }
 
-    textarea {
+    textarea,
+    input[type="url"] {
       width: 100%;
-      min-height: 110px;
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 4px;
@@ -84,8 +84,32 @@
       outline: none;
       transition: border-color 0.15s;
     }
-    textarea::placeholder { color: var(--muted); }
-    textarea:focus { border-color: var(--accent); }
+    textarea { min-height: 110px; }
+    input[type="url"] {
+      min-height: 44px;
+      resize: none;
+    }
+    textarea::placeholder,
+    input[type="url"]::placeholder { color: var(--muted); }
+    textarea:focus,
+    input[type="url"]:focus { border-color: var(--accent); }
+
+    .ingest-form {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 28px;
+      margin-bottom: 28px;
+    }
+
+    .section-label {
+      font-family: var(--mono);
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
 
     .form-row {
       display: flex;
@@ -216,6 +240,23 @@
     }
 
     /* ── Query echo ── */
+    .notice {
+      margin-bottom: 28px;
+      border: 1px solid var(--border);
+      padding: 14px 16px;
+      font-family: var(--mono);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+    .notice.success { border-color: var(--success); color: var(--success); }
+    .notice.error { border-color: var(--danger); color: var(--danger); }
+    .notice span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      word-break: break-word;
+    }
+
     .query-echo {
       margin-bottom: 24px;
     }
@@ -245,7 +286,29 @@
     <p>Local document search &middot; {{ model }}</p>
   </header>
 
+  <form class="ingest-form" method="POST" action="/ingest-url">
+    <div class="section-label">Add website</div>
+    <input
+      type="url"
+      name="url"
+      placeholder="https://example.com/page"
+      value="{{ url or '' }}"
+    />
+    <div class="form-row">
+      <span class="hint">Scrapes this page into /data and indexes it in Chroma</span>
+      <button type="submit">Scrape URL</button>
+    </div>
+  </form>
+
+  {% if ingest %}
+    <div class="notice {% if ingest.ok %}success{% else %}error{% endif %}">
+      {{ ingest.message }}
+      {% if ingest.path %}<span>{{ ingest.path }}</span>{% endif %}
+    </div>
+  {% endif %}
+
   <form class="query-form" method="POST" action="/">
+    <div class="section-label">Ask documents</div>
     <textarea
       name="query"
       placeholder="Ask anything from your documents..."

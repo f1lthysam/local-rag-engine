@@ -1,0 +1,39 @@
+Source: https://quotes.toscrape.com/tag/abilities/page/1/
+
+Quotes to Scrape
+
+# Quotes to Scrape
+
+Login
+
+### Viewing tag: abilities
+
+“It is our choices, Harry, that show what we truly are, far more than our abilities.”
+by J.K. Rowling
+(about)
+
+Tags:
+abilities
+choices
+
+## Top Ten tags
+
+love
+
+inspirational
+
+life
+
+humor
+
+books
+
+reading
+
+friendship
+
+friends
+
+truth
+
+simile

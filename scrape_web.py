@@ -13,17 +13,15 @@ DATA_PATH = "data"
 # ── Site-specific extractors ─────────────────────────────────────────────────
 
 def extract_books_toscrape(soup: BeautifulSoup, url: str) -> str:
-    """Extract book listings from books.toscrape.com cleanly."""
     lines = []
-
     title = soup.find("h1")
     if title:
         lines.append(f"# {title.get_text(strip=True)}\n")
 
     for article in soup.select("article.product_pod"):
-        name_tag = article.select_one("h3 a")
-        price_tag = article.select_one(".price_color")
-        stock_tag = article.select_one(".availability")
+        name_tag   = article.select_one("h3 a")
+        price_tag  = article.select_one(".price_color")
+        stock_tag  = article.select_one(".availability")
         rating_tag = article.select_one(".star-rating")
 
         name   = name_tag["title"] if name_tag and name_tag.has_attr("title") else (name_tag.get_text(strip=True) if name_tag else "Unknown")
@@ -52,10 +50,8 @@ SITE_EXTRACTORS = {
 def generic_extract(soup: BeautifulSoup) -> str:
     for tag in soup(["script", "style", "nav", "footer", "header", "aside", "form", "iframe", "img"]):
         tag.decompose()
-
     for img in soup.find_all("img"):
         img.decompose()
-
     markdown = md(str(soup), heading_style="ATX", bullets="-", strip=["a", "img"])
     return clean_markdown(markdown)
 
@@ -88,7 +84,6 @@ def fetch_and_extract(url: str):
     response = requests.get(url, headers=headers, timeout=10)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, "html.parser")
-
     domain = urlparse(url).netloc.replace("www.", "")
     extractor = SITE_EXTRACTORS.get(domain)
     text = extractor(soup, url) if extractor else generic_extract(soup)
@@ -113,14 +108,15 @@ def scrape_and_save(url: str, filename: str) -> str:
     return filepath
 
 
-# ── Full website scraper ──────────────────────────────────────────────────────
+# ── Full website scraper — saves everything into ONE .md file ─────────────────
 
 def scrape_full_website(start_url: str, base_filename: str, max_pages: int = 20) -> list:
     """
     Crawls the full website starting from start_url.
     Follows internal links up to max_pages.
+    Saves ALL pages into a single .md file.
     Special case for books.toscrape.com — scrapes all 50 paginated pages.
-    Returns list of saved file paths.
+    Returns list with single saved file path.
     """
     parsed_start = urlparse(start_url)
     base_domain = parsed_start.netloc
@@ -131,7 +127,7 @@ def scrape_full_website(start_url: str, base_filename: str, max_pages: int = 20)
 
     visited = set()
     to_visit = [start_url]
-    saved_paths = []
+    all_sections = []
     page_count = 0
 
     while to_visit and page_count < max_pages:
@@ -147,19 +143,10 @@ def scrape_full_website(start_url: str, base_filename: str, max_pages: int = 20)
             if not text.strip():
                 continue
 
-            safe_path = urlparse(url).path.strip("/").replace("/", "-") or "index"
-            safe_path = re.sub(r"[^\w\-]", "-", safe_path)[:60]
-            filename = f"{base_filename}-{safe_path}.md" if safe_path != "index" else f"{base_filename}.md"
-            filepath = os.path.join(DATA_PATH, filename)
-
-            os.makedirs(DATA_PATH, exist_ok=True)
-            with open(filepath, "w", encoding="utf-8") as f:
-                f.write(f"Source: {url}\n\n")
-                f.write(text)
-
-            saved_paths.append(filepath)
+            # Append page content with source header
+            all_sections.append(f"<!-- Page: {url} -->\n\n{text}")
             page_count += 1
-            print(f"Saved {len(text)} chars → {filepath}")
+            print(f"Fetched {len(text)} chars from {url}")
 
             # Find internal links to follow
             for a_tag in soup.find_all("a", href=True):
@@ -177,14 +164,22 @@ def scrape_full_website(start_url: str, base_filename: str, max_pages: int = 20)
             print(f"Failed: {url} — {e}")
             continue
 
-    print(f"Done. Scraped {page_count} pages from {start_url}")
-    return saved_paths
+    # Save everything into one single .md file
+    os.makedirs(DATA_PATH, exist_ok=True)
+    filepath = os.path.join(DATA_PATH, base_filename + ".md")
+
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(f"Source: {start_url}\n\n")
+        f.write("\n\n---\n\n".join(all_sections))
+
+    print(f"Done. Saved {page_count} pages into {filepath}")
+    return [filepath]
 
 
-# ── Paginated scraper ─────────────────────────────────────────────────────────
+# ── Paginated scraper (books.toscrape.com) ────────────────────────────────────
 
 def scrape_all_pages(base_url: str, filename: str, max_pages: int = 50) -> list:
-    """Scrape all paginated pages from books.toscrape.com."""
+    """Scrape all paginated pages from books.toscrape.com into one file."""
     all_text = []
     for page in range(1, max_pages + 1):
         url = base_url if page == 1 else f"{base_url}catalogue/page-{page}.html"

@@ -2,7 +2,7 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import os
-os.environ["PYTHONWARNINGS"] = "ignore"
+
 
 import logging
 logging.disable(logging.CRITICAL)
@@ -12,8 +12,11 @@ from pathlib import Path
 import re
 import time
 import tiktoken
+from dotenv import load_dotenv
+load_dotenv()
+os.environ["PYTHONWARNINGS"] = "ignore"
 
-GOOGLE_API_KEY = "AIzaSyCCyayEycnCFPtvP8IBRlu1lKVj0gcTpjE"
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 CHROMA_PATH = "chroma"
 DATA_PATH = "data"
 THRESHOLD = 1.6

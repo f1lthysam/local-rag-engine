@@ -10,16 +10,19 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0e0e0e;
+      --bg:        #000000;
       --surface:   #161616;
       --border:    #2a2a2a;
       --text:      #e8e8e8;
-      --muted:     #5a5a5a;
-      --accent:    #d4a84b;
+      --muted:     #7c7474;
+      --accent:    #e07f00;
       --danger:    #c0392b;
       --success:   #27ae60;
       --mono:      'IBM Plex Mono', monospace;
       --sans:      'IBM Plex Sans', sans-serif;
+      --confidence-high:var(--success);
+      --confidence-medium: yellow;;
+      --confidence-low: var(--danger);
     }
 
     html, body {
@@ -277,13 +280,27 @@
       font-size: 11px;
       color: var(--muted);
     }
+    .my-btn{
+      background: var(--accent);
+      color: #0e0e0e;
+      border: none;
+      border-radius: 3px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 10px 24px;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
   </style>
 </head>
 <body>
 <div class="shell">
 
   <header>
-    <h1>RAG &mdash; Query Interface</h1>
+    <button class="my-btn">LOCAL &mdash; RAG &mdash; ENGINE</button>
     <p>Local document search &middot; {{ model }}</p>
   </header>
 
@@ -387,7 +404,7 @@
   </div>
   {% endif %}
 
-  <footer>rag-tutorial-v2 &middot; chromadb + ollama</footer>
+  <footer>local-rag &middot; chromadb + gemini</footer>
 
 </div>
 </body>

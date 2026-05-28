@@ -11,16 +11,18 @@ import argparse
 from pathlib import Path
 import re
 import time
+import tiktoken
 
+GOOGLE_API_KEY = "AIzaSyCCyayEycnCFPtvP8IBRlu1lKVj0gcTpjE"
 CHROMA_PATH = "chroma"
 DATA_PATH = "data"
 THRESHOLD = 1.6
 MIN_CONFIDENCE = 65.0
-DEFAULT_K = 3
-MAX_CONTEXT_CHARS = 2500
+DEFAULT_K = 5
+MAX_CONTEXT_CHARS = 6000
 _DB = None
 _PROMPT_TEMPLATE = None
-_OLLAMA_MODEL = None
+_GEMINI_MODEL = None
 
 PROMPT_TEMPLATE = """
 Answer the question using ONLY the following context.
@@ -36,11 +38,24 @@ Question: {question}
 """
 
 
-import tiktoken
-
 def count_tokens(text: str) -> int:
     enc = tiktoken.get_encoding("cl100k_base")
-    return len(enc.encode(text))
+    return len(enc.encode(str(text)))
+
+
+def extract_response_text(raw) -> str:
+    """Safely extract plain string from any Gemini response format."""
+    if isinstance(raw, str):
+        return raw
+    if isinstance(raw, list):
+        parts = []
+        for item in raw:
+            if isinstance(item, dict) and "text" in item:
+                parts.append(item["text"])
+            elif isinstance(item, str):
+                parts.append(item)
+        return "\n".join(parts)
+    return str(raw)
 
 
 def main():
@@ -122,8 +137,9 @@ def query_rag(
     prompt = prompt_template.format(context=context_text, question=query_text)
     prompt_tokens = count_tokens(prompt)
 
-    model = get_ollama_model()
-    response_text = model.invoke(prompt)
+    from langchain_core.messages import HumanMessage
+    raw = get_gemini_model().invoke([HumanMessage(content=prompt)]).content
+    response_text = extract_response_text(raw)
     llm_done_time = time.perf_counter()
 
     latency = llm_done_time - start_time
@@ -194,9 +210,11 @@ def query_rag_web(query_text: str):
     prompt = get_prompt_template().format(context=context_text, question=query_text)
     prompt_tokens = count_tokens(prompt)
 
-    response_text = get_ollama_model().invoke(prompt)
-    latency = time.perf_counter() - start_time
+    from langchain_core.messages import HumanMessage
+    raw = get_gemini_model().invoke([HumanMessage(content=prompt)]).content
+    response_text = extract_response_text(raw)
 
+    latency = time.perf_counter() - start_time
     response_tokens = count_tokens(response_text)
     total_tokens = prompt_tokens + response_tokens
     confidence = round(distance_to_confidence(results[0][1]), 1)
@@ -242,12 +260,16 @@ def get_prompt_template():
     return _PROMPT_TEMPLATE
 
 
-def get_ollama_model():
-    global _OLLAMA_MODEL
-    if _OLLAMA_MODEL is None:
-        from langchain_ollama import OllamaLLM
-        _OLLAMA_MODEL = OllamaLLM(model="llama3.2", temperature=0.1)
-    return _OLLAMA_MODEL
+def get_gemini_model():
+    global _GEMINI_MODEL
+    if _GEMINI_MODEL is None:
+        from langchain_google_genai import ChatGoogleGenerativeAI
+        _GEMINI_MODEL = ChatGoogleGenerativeAI(
+            model="gemini-3.1-flash-lite",
+            temperature=0.1,
+            google_api_key=GOOGLE_API_KEY,
+        )
+    return _GEMINI_MODEL
 
 
 def distance_to_confidence(distance: float) -> float:

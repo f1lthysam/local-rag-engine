@@ -16,7 +16,7 @@ from urllib.parse import urlparse
 os.environ["PYTHONWARNINGS"] = "ignore"
 logging.disable(logging.CRITICAL)
 
-from flask import Flask, redirect, render_template, request, session, url_for
+from flask import Flask, redirect, render_template, request, send_from_directory, session, url_for
 from populate_database import add_to_chroma, load_documents, split_documents
 import query_data
 from scrape_web import scrape_and_save, scrape_full_website
@@ -76,6 +76,11 @@ def index():
 def clear_chat():
     CHAT_SESSIONS[get_session_id()] = []
     return redirect(url_for("index"))
+
+
+@app.route("/images/<path:filename>")
+def images(filename):
+    return send_from_directory("images", filename)
 
 
 @app.route("/ingest-url", methods=["POST"])

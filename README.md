@@ -1,2 +1,2 @@
-# rag-tutorial-v2-fixed(2)
-rag (+web scrapping)
+# Local-RAG-engine
+Local RAG (Retrieval-Augmented Generation) is a system where document retrieval and LLM inference run locally for privacy and efficiency. In this project, documents are embedded and stored using ChromaDB, queried for relevant context, and then passed to language models via Ollama and Gemini for response generation. This pipeline enables fast, context-aware answers without relying entirely on external APIs.

@@ -11,39 +11,71 @@ Then open: http://localhost:5000
 import warnings
 warnings.filterwarnings("ignore")
 import os, logging
+from uuid import uuid4
 from urllib.parse import urlparse
 os.environ["PYTHONWARNINGS"] = "ignore"
 logging.disable(logging.CRITICAL)
 
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request, session, url_for
 from populate_database import add_to_chroma, load_documents, split_documents
 import query_data
 from scrape_web import scrape_and_save, scrape_full_website
 
 app = Flask(__name__, template_folder=".")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "local-rag-dev-secret")
 
 MODEL_NAME = "gemini-3.1-flash-lite"
+MAX_CHAT_TURNS = 20
+CHAT_SESSIONS = {}
+
+
+def get_session_id():
+    if "chat_session_id" not in session:
+        session["chat_session_id"] = uuid4().hex
+    return session["chat_session_id"]
+
+
+def get_chat_history():
+    return CHAT_SESSIONS.setdefault(get_session_id(), [])
+
+
+def append_chat_turn(query, result):
+    history = get_chat_history()
+    history.append({"query": query, "result": result})
+    del history[:-MAX_CHAT_TURNS]
+
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     result = None
     query  = None
     ingest = None
+    chat_history = get_chat_history()
+    if chat_history:
+        result = chat_history[-1].get("result")
 
     if request.method == "POST":
         query = request.form.get("query", "").strip()
         if query:
-            result = query_data.query_rag_web(query)
+            result = query_data.query_rag_web(query, chat_history=chat_history)
+            append_chat_turn(query, result)
 
     return render_template(
         "index.html",
         result=result,
         query=query,
+        chat_history=chat_history,
         ingest=ingest,
         url="",
         model=MODEL_NAME,
     )
+
+
+@app.route("/clear-chat", methods=["POST"])
+def clear_chat():
+    CHAT_SESSIONS[get_session_id()] = []
+    return redirect(url_for("index"))
 
 
 @app.route("/ingest-url", methods=["POST"])
@@ -79,6 +111,7 @@ def ingest_url():
         "index.html",
         result=None,
         query=None,
+        chat_history=get_chat_history(),
         ingest=ingest,
         url=url,
         model=MODEL_NAME,

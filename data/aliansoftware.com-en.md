@@ -18,6 +18,229 @@ Live agent activity
 
 How we work
 
+##Team members and about 
+Skip to content
+AI
+An Alian Software company
+Services
+Work
+Pricing
+About
+Blog
+
+Search
+⌘K
+EN
+HI
+
+Try our AI
+Book a 20-min call
+About Alian AI
+
+Engineered in India. Shipping AI globally.
+Alian AI is the AI services division of Alian Software— a 15+ year old engineering firm shipping production enterprise systems for clients across manufacturing, finance, and SaaS. We spun up the AI division to do one thing well: build production-ready AI that ships in weeks, backed by people who've shipped real software for a long time.
+
+We're not a consultancy that built a deck about agents. We're an engineering team that ships them — chatbots, agents, RAG apps, automation pipelines, predictive models — and hands them over to your team to run.
+
+15+
+
+years of Alian Software engineering DNA
+
+4
+
+service pillars · agents, apps, strategy, data
+
+$25
+
+starting hourly rate · senior talent
+
+4–8 wk
+
+typical fixed-fee sprint timeline
+
+How we work
+We build, we don't pitch.
+Every recommendation we make, we can also implement. That's why our scoping is honest and our timelines are real.
+
+Senior engineers on every project.
+No juniors learning on your dime. Backed by Alian Software's 15+ years of enterprise engineering bench.
+
+You own the code, day one.
+Code, prompts, agent configs, deployment artifacts — yours from commit one. No vendor lock-in disguised as 'our framework.'
+
+Production-ready, not slide-ready.
+Most engagements ship in 4–8 weeks. We measure ourselves on what's running in your stack, not on what's in a deck.
+
+The team
+The leadership that's run Alian Software for 15+ years now backs every Alian AI engagement. No account executives, no handoffs — you'll work directly with senior engineers from day one, and the people below stay accountable to the outcome.
+
+Leadership
+Mevil Bhojani
+
+CEO
+
+Clients are family. The best way to solve their problems is to understand their needs first.
+
+Mehul Parmar
+
+CFO
+
+Sharp on numbers, sharper on commercial strategy. Finance built to accelerate the business, not slow it down.
+
+Ravi Bhojani
+
+CMO
+
+Marketing earns trust by telling the truth about the work. No slogans, no hype — just the story of what we ship.
+
+Nimesh Dixit
+
+CTO
+
+Production-grade code or it doesn't ship. Architecture the team can actually maintain — built to last past the demo.
+
+Rashesh Makwana
+
+Creative Director
+
+Design that signals real expertise. The brand should look exactly like the team behind it — direct, considered, built to last.
+
+Engineering & Design
+The senior engineers and designers who actually ship the work. The people you'll meet on the discovery call — and the same ones still on the call at handover.
+
+Harmit Mendapara
+
+Fullstack AI Engineer & Software Architect
+
+Ships agents and AI apps end-to-end. Architecture that holds up past the demo, code the team can actually maintain.
+
+Jay Dara
+
+Fullstack AI Engineer
+
+11+ years of shipping production software, now focused on AI-powered features. Fast prototypes first, then the polish that turns them into product.
+
+Shiv Joshi
+
+Fullstack AI Engineer
+
+Backend-rooted, fullstack-fluent. Builds the pipelines, embeddings, and integrations that turn AI demos into production features.
+
+Hetal Makwana
+
+Creative AI Designer
+
+13+ years of product design, now focused on AI-first creative work. Translates complex models into experiences that feel obvious to use.
+
+Want to see if we're a fit?
+20 minutes. Honest scoping. We'll tell you upfront if we're not the right team.
+
+Book a 20-min call →
+See the work
+Google
+4.3
+Upwork
+99% Job Success
+Top rated Plus
+Envato
+4.5
+Clutch
+4.9
+Goodfirms
+5.0
+Glassdoor
+4.0
+Services
+AI Agents & Automation
+Custom AI Apps & Chatbots
+AI Strategy & Enablement
+Data & Intelligence
+For your industry →
+Work
+Case studies
+Customers
+Testimonials
+Demos
+Agent archetypes
+Resources
+Blog
+Playbooks
+Templates
+Snippets
+Use cases
+Glossary
+Learn
+Tools
+AI Readiness Quiz
+ROI calculator
+Token counter
+Cost estimator
+Build a spec
+AI Readiness Checklist
+Engagement
+Pricing
+Process
+Methodology
+Budget guide
+Sample SOWs
+Scoping briefs
+Handoff
+Migrations
+Free AI audit
+Office hours
+vs comparisons
+Company
+About
+Team
+Founder letter
+Principles
+Timeline
+Why now
+Careers
+Partners
+Referrals
+Press
+Contact
+More
+
+Explore
+Quick wins
+Risks
+Decisions
+Case study wishlist
+Integrations
+API docs
+PDF library
+Community
+Labs
+Roadmap
+Changelog
+Uses
+Status
+Security
+Disclosure
+State of AI 2026
+Search
+Sitemap
+AI
+·
+© 2026 · An Alian Software company
+Privacy
+·
+Terms
+·
+Cookies
+·
+Accessibility
+·
+Blog RSS
+Engineered in India · Shipping globally
+
+About · Alian AI
+We don't track you. No third-party analytics, no advertising cookies, no fingerprinting. We use one functional cookie for your theme preference. See the cookies policy →
+
+Got it
+
 ## From "we have a problem" to live in production. The whole arc.
 
 Most engagements ship in 4–6 weeks. Here's the timeline.

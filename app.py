@@ -18,12 +18,12 @@ logging.disable(logging.CRITICAL)
 from flask import Flask, render_template, request
 from populate_database import add_to_chroma, load_documents, split_documents
 import query_data
-from scrape_web import scrape_and_save
+from scrape_web import scrape_and_save, scrape_full_website
 
 app = Flask(__name__, template_folder=".")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 
-MODEL_NAME = "phi"
+MODEL_NAME = "gemini-3.1-flash-lite"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -53,7 +53,11 @@ def ingest_url():
 
     try:
         validate_url(url)
-        saved_path = scrape_and_save(url, filename_from_url(url))
+        filename = filename_from_url(url)
+
+        # Scrape the full website (follows internal links up to 20 pages)
+        saved_paths = scrape_full_website(url, filename)
+
         documents = load_documents()
         chunks = split_documents(documents)
         add_to_chroma(chunks)
@@ -61,8 +65,8 @@ def ingest_url():
 
         ingest = {
             "ok": True,
-            "message": f"Scraped and indexed {url}",
-            "path": saved_path,
+            "message": f"Scraped {len(saved_paths)} page(s) from {url} and indexed them.",
+            "path": ", ".join(saved_paths[:3]) + ("..." if len(saved_paths) > 3 else ""),
         }
     except Exception as exc:
         ingest = {
@@ -93,7 +97,7 @@ def filename_from_url(url: str):
     path = parsed.path.strip("/").replace("/", "-")
     base = f"{domain}-{path}" if path else domain
     safe = "".join(c if c.isalnum() or c in "-_." else "-" for c in base)
-    return f"{safe[:80]}.md"
+    return f"{safe[:80]}"
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

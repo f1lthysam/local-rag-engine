@@ -2,9 +2,11 @@ import warnings
 warnings.filterwarnings("ignore")
 
 import os
+import re
 import requests
 from bs4 import BeautifulSoup
 from markdownify import markdownify as md
+from urllib.parse import urlparse, urljoin
 
 DATA_PATH = "data"
 
@@ -59,7 +61,6 @@ def generic_extract(soup: BeautifulSoup) -> str:
 
 
 def clean_markdown(text: str) -> str:
-    import re
     text = text.replace("Â£", "£").replace("Â", "").replace("\xa3", "£")
     text = re.sub(r"!\[.*?\]\(.*?\)", "", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
@@ -77,29 +78,28 @@ def clean_markdown(text: str) -> str:
     return "\n".join(clean_lines).strip()
 
 
-# ── Main scraper ──────────────────────────────────────────────────────────────
+# ── Core fetch ────────────────────────────────────────────────────────────────
 
-def scrape_and_save(url: str, filename: str):
-    print(f"Scraping: {url}")
-
+def fetch_and_extract(url: str):
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     }
-
     response = requests.get(url, headers=headers, timeout=10)
     response.raise_for_status()
-
     soup = BeautifulSoup(response.text, "html.parser")
 
-    from urllib.parse import urlparse
     domain = urlparse(url).netloc.replace("www.", "")
     extractor = SITE_EXTRACTORS.get(domain)
+    text = extractor(soup, url) if extractor else generic_extract(soup)
+    return text, soup
 
-    if extractor:
-        clean_text = extractor(soup, url)
-    else:
-        clean_text = generic_extract(soup)
+
+# ── Single page scraper ───────────────────────────────────────────────────────
+
+def scrape_and_save(url: str, filename: str) -> str:
+    print(f"Scraping: {url}")
+    text, _ = fetch_and_extract(url)
 
     os.makedirs(DATA_PATH, exist_ok=True)
     filename = os.path.splitext(filename)[0] + ".md"
@@ -107,22 +107,84 @@ def scrape_and_save(url: str, filename: str):
 
     with open(filepath, "w", encoding="utf-8") as f:
         f.write(f"Source: {url}\n\n")
-        f.write(clean_text)
+        f.write(text)
 
-    print(f"Saved {len(clean_text)} characters to {filepath}")
+    print(f"Saved {len(text)} characters to {filepath}")
     return filepath
 
 
-def scrape_multiple(urls: dict):
-    for filename, url in urls.items():
+# ── Full website scraper ──────────────────────────────────────────────────────
+
+def scrape_full_website(start_url: str, base_filename: str, max_pages: int = 20) -> list:
+    """
+    Crawls the full website starting from start_url.
+    Follows internal links up to max_pages.
+    Special case for books.toscrape.com — scrapes all 50 paginated pages.
+    Returns list of saved file paths.
+    """
+    parsed_start = urlparse(start_url)
+    base_domain = parsed_start.netloc
+
+    # Special case: books.toscrape.com
+    if "books.toscrape.com" in base_domain:
+        return scrape_all_pages(start_url, base_filename + ".md")
+
+    visited = set()
+    to_visit = [start_url]
+    saved_paths = []
+    page_count = 0
+
+    while to_visit and page_count < max_pages:
+        url = to_visit.pop(0)
+        if url in visited:
+            continue
+        visited.add(url)
+
         try:
-            scrape_and_save(url, filename)
+            print(f"Scraping page {page_count + 1}/{max_pages}: {url}")
+            text, soup = fetch_and_extract(url)
+
+            if not text.strip():
+                continue
+
+            safe_path = urlparse(url).path.strip("/").replace("/", "-") or "index"
+            safe_path = re.sub(r"[^\w\-]", "-", safe_path)[:60]
+            filename = f"{base_filename}-{safe_path}.md" if safe_path != "index" else f"{base_filename}.md"
+            filepath = os.path.join(DATA_PATH, filename)
+
+            os.makedirs(DATA_PATH, exist_ok=True)
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.write(f"Source: {url}\n\n")
+                f.write(text)
+
+            saved_paths.append(filepath)
+            page_count += 1
+            print(f"Saved {len(text)} chars → {filepath}")
+
+            # Find internal links to follow
+            for a_tag in soup.find_all("a", href=True):
+                href = a_tag["href"]
+                full_url = urljoin(url, href)
+                parsed = urlparse(full_url)
+
+                if (parsed.netloc == base_domain and
+                    full_url not in visited and
+                    not parsed.fragment and
+                    not parsed.path.endswith((".pdf", ".jpg", ".png", ".zip", ".css", ".js"))):
+                    to_visit.append(full_url)
+
         except Exception as e:
-            print(f"Failed to scrape {url}: {e}")
+            print(f"Failed: {url} — {e}")
+            continue
+
+    print(f"Done. Scraped {page_count} pages from {start_url}")
+    return saved_paths
 
 
-def scrape_all_pages(base_url: str, filename: str, max_pages: int = 50):
-    """Scrape all paginated pages from a site like books.toscrape.com."""
+# ── Paginated scraper ─────────────────────────────────────────────────────────
+
+def scrape_all_pages(base_url: str, filename: str, max_pages: int = 50) -> list:
+    """Scrape all paginated pages from books.toscrape.com."""
     all_text = []
     for page in range(1, max_pages + 1):
         url = base_url if page == 1 else f"{base_url}catalogue/page-{page}.html"
@@ -143,7 +205,15 @@ def scrape_all_pages(base_url: str, filename: str, max_pages: int = 50):
         f.write(f"Source: {base_url}\n\n")
         f.write("\n\n".join(all_text))
     print(f"Saved all pages to {filepath}")
-    return filepath
+    return [filepath]
+
+
+def scrape_multiple(urls: dict):
+    for filename, url in urls.items():
+        try:
+            scrape_and_save(url, filename)
+        except Exception as e:
+            print(f"Failed to scrape {url}: {e}")
 
 
 if __name__ == "__main__":

@@ -19,7 +19,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 CHROMA_PATH = "chroma"
 DATA_PATH = "data"
-THRESHOLD = 2.4
+THRESHOLD = 1.2
 MIN_CONFIDENCE = 40.0
 LEXICAL_FALLBACK_CONFIDENCE = 40.0
 DEFAULT_K = 5
@@ -345,7 +345,7 @@ def build_lexical_context(query_text: str):
                 continue
 
             window_start = max(0, index - 2)
-            window_end = min(len(lines), index + 3)
+            window_end = min(len(lines), index + 8)
             snippet = "\n".join(lines[window_start:window_end]).strip()
             matches.append((score, path.as_posix(), index + 1, snippet))
 
@@ -405,7 +405,8 @@ def plan_retrieval(query_text: str, chat_history=None, k_override=None):
     }
     fact_markers = {
         "who", "what", "when", "where", "which", "email", "phone", "price",
-        "cost", "ceo", "cfo", "cto", "address",
+        "cost", "ceo", "cfo", "cto", "address", "team", "members", "founder",
+        "director", "engineer", "staff", "people", "person", "name",
     }
 
     broad_score = sum(1 for marker in broad_markers if marker in query)
@@ -425,7 +426,7 @@ def plan_retrieval(query_text: str, chat_history=None, k_override=None):
         mode = "focused"
         k = 6
         context_tokens = 1400
-        max_chunk_tokens = 380
+        max_chunk_tokens = 600  # increased from 380 so CEO/team lines aren't cut off
     else:
         mode = "balanced"
         k = DEFAULT_K
@@ -595,22 +596,30 @@ def find_direct_markdown_answer(query_text: str):
     if not role:
         return None
 
+    # Pattern 1: "CEO of Company: Name"
     role_pattern = re.compile(
         rf"^{re.escape(role)}\s+of\s+.+?:\s*(?P<name>.+?)\.?$", re.IGNORECASE,
     )
+    # Pattern 2: "| Name | CEO |" (table)
     table_pattern = re.compile(
         rf"^\|\s*(?P<name>[^|]+?)\s*\|\s*{re.escape(role)}\s*\|", re.IGNORECASE,
     )
+    # Pattern 3: "Name is CEO" (natural language — the format aliansoftware uses)
+    is_pattern = re.compile(
+        rf"^(?P<name>[A-Z][a-zA-Z\s]+?)\s+is\s+{re.escape(role)}\b", re.IGNORECASE,
+    )
+    # Pattern 4: "CEO: Name" or "CEO — Name"
+    colon_pattern = re.compile(
+        rf"^{re.escape(role)}\s*[:\-—]\s*(?P<name>.+?)\.?$", re.IGNORECASE,
+    )
 
     for path in Path(DATA_PATH).glob("*.md"):
-        for line in path.read_text(encoding="utf-8").splitlines():
+        for line in path.read_text(encoding="utf-8", errors="ignore").splitlines():
             line = line.strip()
-            role_match = role_pattern.match(line)
-            if role_match:
-                return f"The {role} is {role_match.group('name').strip()}.", path.as_posix()
-            table_match = table_pattern.match(line)
-            if table_match:
-                return f"The {role} is {table_match.group('name').strip()}.", path.as_posix()
+            for pattern in [role_pattern, colon_pattern, is_pattern, table_pattern]:
+                m = pattern.match(line)
+                if m:
+                    return f"The {role} of Alian Software is {m.group('name').strip()}.", path.as_posix()
 
     return None
 

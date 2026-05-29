@@ -11,3 +11,4 @@ langchain-ollama
 chromadb
 sentence-transformers
 pytest
+python-docx

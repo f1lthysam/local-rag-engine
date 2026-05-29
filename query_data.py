@@ -31,25 +31,57 @@ _DB = None
 _PROMPT_TEMPLATE = None
 _GEMINI_MODEL = None
 
+
 PROMPT_TEMPLATE = """
-Answer the question using ONLY the following context.
-Use the conversation history only to understand follow-up references, such as "that", "it", "the previous one", or similar wording.
-Do not use the conversation history as a source of facts unless the same facts are supported by the retrieved context.
-If the context contains relevant information, answer directly and concisely.
-If the context does not contain enough information to answer, say exactly:
-"I don't have information about that in my documents."
+You are a helpful, conversational assistant. Use the rules below in order:
+
+1. FOLLOW-UPS: If the question is a follow-up ("why?", "explain more", "what about that?", "how?"),
+   use the conversation history to understand what is being referred to, then answer it naturally.
+
+2. DOCUMENT CONTEXT: If the retrieved context contains relevant information, use it as your
+   primary source and answer directly and concisely. Prefer context over general knowledge.
+
+3. GENERAL KNOWLEDGE: If the question is clearly general (greetings, common facts, coding help,
+   definitions) and not about the documents, answer naturally from your own knowledge.
+
+4. NO INFO: Only say "I don't have information about that in my documents." if the question is
+   specifically about the documents/company and the context does not contain the answer.
+
+Never say you don't know something you actually know. Never ignore a follow-up question.
+Keep answers concise — 1 to 4 sentences unless the question asks for detail.
 
 Conversation history:
 {history}
 
 ---
 
-Context: {context}
+Context from documents:
+{context}
 
 ---
 
 Question: {question}
 """
+
+# PROMPT_TEMPLATE = """
+# Answer the question using ONLY the following context.
+# Use the conversation history only to understand follow-up references, such as "that", "it", "the previous one", or similar wording.
+# Do not use the conversation history as a source of facts unless the same facts are supported by the retrieved context.
+# If the context contains relevant information, answer directly and concisely.
+# # If the context does not contain enough information to answer, say exactly:
+# # "I don't have information about that in my documents."
+
+# Conversation history:
+# {history}
+
+# ---
+
+# Context: {context}
+
+# ---
+
+# Question: {question}
+# """
 
 
 def count_tokens(text: str) -> int:

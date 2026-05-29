@@ -657,13 +657,13 @@
   <!-- ── Input bar ── -->
   <div class="input-bar">
     <form method="POST" action="/upload-file" enctype="multipart/form-data" class="upload-form">
-      <label class="upload-btn" for="document-upload" title="Upload PDF or Markdown" aria-label="Upload PDF or Markdown">+</label>
+      <label class="upload-btn" for="document-upload" title="Upload a document" aria-label="Upload a document">+</label>
       <input
         id="document-upload"
         class="upload-input"
         type="file"
         name="document"
-        accept=".pdf,.md,application/pdf,text/markdown"
+        accept=".pdf,.doc,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown"
       />
     </form>
 

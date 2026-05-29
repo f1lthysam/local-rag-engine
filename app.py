@@ -17,6 +17,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 logging.disable(logging.CRITICAL)
 
 from flask import Flask, redirect, render_template, request, send_from_directory, session, url_for
+from werkzeug.utils import secure_filename
 from populate_database import add_to_chroma, load_documents, split_documents
 import query_data
 from scrape_web import scrape_and_save, scrape_full_website
@@ -28,6 +29,8 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "local-rag-dev-secret")
 MODEL_NAME = "gemini-3.1-flash-lite"
 MAX_CHAT_TURNS = 20
 CHAT_SESSIONS = {}
+DATA_PATH = "data"
+ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".md"}
 
 
 def get_session_id():
@@ -119,6 +122,52 @@ def ingest_url():
         chat_history=get_chat_history(),
         ingest=ingest,
         url=url,
+        model=MODEL_NAME,
+    )
+
+
+@app.route("/upload-file", methods=["POST"])
+def upload_file():
+    uploaded_file = request.files.get("document")
+    ingest = None
+
+    try:
+        if not uploaded_file or not uploaded_file.filename:
+            raise ValueError("choose a PDF or Markdown file")
+
+        original_name = secure_filename(uploaded_file.filename)
+        extension = os.path.splitext(original_name)[1].lower()
+        if extension not in ALLOWED_UPLOAD_EXTENSIONS:
+            raise ValueError("only .pdf and .md files are supported")
+
+        os.makedirs(DATA_PATH, exist_ok=True)
+        saved_path = os.path.join(DATA_PATH, original_name)
+        uploaded_file.save(saved_path)
+
+        documents = load_documents()
+        chunks = split_documents(documents)
+        add_to_chroma(chunks)
+        query_data._DB = None
+
+        ingest = {
+            "ok": True,
+            "message": f"Uploaded and indexed {original_name}.",
+            "path": saved_path,
+        }
+    except Exception as exc:
+        ingest = {
+            "ok": False,
+            "message": f"Could not upload/index that file: {exc}",
+            "path": None,
+        }
+
+    return render_template(
+        "index.html",
+        result=None,
+        query=None,
+        chat_history=get_chat_history(),
+        ingest=ingest,
+        url="",
         model=MODEL_NAME,
     )
 

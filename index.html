@@ -338,12 +338,55 @@
       border-top: 1px solid var(--border);
       border-right: 1px solid var(--separator);
       padding: 16px 28px;
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+    }
+
+    .upload-form {
+      flex: 0 0 auto;
+    }
+
+    .upload-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .upload-btn {
+      width: 42px;
+      height: 42px;
+      border: 1px solid var(--border2);
+      border-radius: 8px;
+      background: var(--surface);
+      color: var(--accent);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--mono);
+      font-size: 28px;
+      line-height: 1;
+      transition: border-color 0.15s, background 0.15s, opacity 0.15s;
+    }
+
+    .upload-btn:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+    }
+
+    .upload-btn.is-uploading {
+      cursor: wait;
+      opacity: 0.6;
     }
 
     .input-wrap {
       position: relative;
       display: flex;
       align-items: flex-end;
+      flex: 1 1 auto;
     }
 
     .input-wrap textarea {
@@ -613,6 +656,17 @@
 
   <!-- ── Input bar ── -->
   <div class="input-bar">
+    <form method="POST" action="/upload-file" enctype="multipart/form-data" class="upload-form">
+      <label class="upload-btn" for="document-upload" title="Upload PDF or Markdown" aria-label="Upload PDF or Markdown">+</label>
+      <input
+        id="document-upload"
+        class="upload-input"
+        type="file"
+        name="document"
+        accept=".pdf,.md,application/pdf,text/markdown"
+      />
+    </form>
+
     <form method="POST" action="/" class="input-wrap">
       <textarea
         name="query"
@@ -711,6 +765,9 @@
   const queryInput = document.querySelector('.input-wrap textarea[name="query"]');
   const queryForm = document.querySelector(".input-wrap");
   const sendButton = document.querySelector(".send-btn");
+  const uploadForm = document.querySelector(".upload-form");
+  const uploadInput = document.querySelector(".upload-input");
+  const uploadButton = document.querySelector(".upload-btn");
   let isSubmittingQuery = false;
 
   function appendRetrievalAnimation(queryText) {
@@ -767,6 +824,17 @@
         event.preventDefault();
         queryForm.requestSubmit();
       }
+    });
+  }
+
+  if (uploadForm && uploadInput) {
+    uploadInput.addEventListener("change", () => {
+      if (!uploadInput.files || uploadInput.files.length === 0) return;
+      if (uploadButton) {
+        uploadButton.classList.add("is-uploading");
+        uploadButton.textContent = "...";
+      }
+      uploadForm.submit();
     });
   }
 </script>

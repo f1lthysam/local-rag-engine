@@ -1,0 +1,18 @@
+{
+  "session_id": "a00b4ee4-3bbd-44ac-b021-c946bb2a1e5b",
+  "created_at": "2026-06-02T09:14:52Z",
+  "title": "who is soham?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "who is soham?",
+      "timestamp": "2026-06-02T09:14:52Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Soham is a student and developer based in Ahmedabad, India. He is interested in AI, machine learning, and RAG systems.",
+      "timestamp": "2026-06-02T09:14:53Z"
+    }
+  ],
+  "updated_at": "2026-06-02T09:14:53Z"
+}

@@ -239,6 +239,23 @@ def pdf_to_markdown(uploaded_file, original_name: str) -> str:
     return "\n\n".join(sections)
 
 
+# Expose a simple endpoint to clear all persisted chat histories (used by the widget fallback)
+HISTORY_DIR = Path("chat_histories")
+
+
+@app.route('/history/clear-all', methods=['POST'])
+def clear_all_histories():
+    HISTORY_DIR.mkdir(exist_ok=True)
+    deleted = 0
+    for f in HISTORY_DIR.glob('chat_history_*.json'):
+        try:
+            f.unlink()
+            deleted += 1
+        except OSError:
+            continue
+    return {"deleted": True, "deleted_count": deleted}
+
+
 def docx_to_markdown(uploaded_file, original_name: str) -> str:
     if Path(original_name).suffix.lower() == ".doc":
         raise ValueError("legacy .doc files are not supported; please save it as .docx")

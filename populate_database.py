@@ -119,7 +119,27 @@ def calculate_chunk_ids(chunks):
 
 def clear_database():
     if os.path.exists(CHROMA_PATH):
-        shutil.rmtree(CHROMA_PATH)
+        try:
+            shutil.rmtree(CHROMA_PATH)
+        except PermissionError:
+            # On Windows, files may be locked. Try removing individual files.
+            import time
+            time.sleep(1)  # Wait a moment for any locks to release
+            for root, dirs, files in os.walk(CHROMA_PATH, topdown=False):
+                for file in files:
+                    try:
+                        os.remove(os.path.join(root, file))
+                    except PermissionError:
+                        pass
+                for dir_name in dirs:
+                    try:
+                        os.rmdir(os.path.join(root, dir_name))
+                    except (PermissionError, OSError):
+                        pass
+            try:
+                os.rmdir(CHROMA_PATH)
+            except (PermissionError, OSError):
+                pass
 
 
 if __name__ == "__main__":

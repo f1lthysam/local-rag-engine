@@ -19,7 +19,7 @@
       --separator: #ffffff;
       --text:      #e8e8e8bf;
       --muted:     #eeebebc4;
-      --accent:    rgba(255, 136, 0, 0.704);              /* #e07f00; */
+      --accent:    rgba(255, 136, 0, 0.704);
       --danger:    #c0392b;
       --success:   #27ae60;
       --mono:      'Roboto Mono', monospace;
@@ -475,7 +475,6 @@
       font-size: 18px;
     }
 
-    /* Confidence bar */
     .conf-bar-track {
       height: 5px;
       background: var(--border2);
@@ -490,7 +489,6 @@
       transition: width 0.4s ease;
     }
 
-    /* Token rows */
     .token-row {
       display: flex;
       justify-content: space-between;
@@ -503,7 +501,6 @@
     .token-row:last-child { border-bottom: none; }
     .token-row span { color: var(--text); font-weight: 500; }
 
-    /* Source list */
     .source-item {
       font-family: var(--mono);
       font-size: 13px;
@@ -532,49 +529,25 @@
       .layout {
         grid-template-columns: 260px minmax(0, 1fr);
       }
-
-      .stats-panel {
-        display: none;
-      }
+      .stats-panel { display: none; }
     }
 
     @media (max-width: 760px) {
       html, body { font-size: 16px; }
-
       .layout {
         grid-template-columns: 1fr;
         grid-template-rows: auto 1fr auto;
       }
-
-      .sidebar,
-      .chat-area,
-      .input-bar {
-        grid-column: 1;
-      }
-
+      .sidebar, .chat-area, .input-bar { grid-column: 1; }
       .sidebar {
         grid-row: 1;
         border-right: none;
         border-bottom: 1px solid var(--border);
         padding: 22px;
       }
-
-      .chat-area {
-        grid-row: 2;
-        border-right: none;
-      }
-
-      .input-bar {
-        grid-row: 3;
-        border-right: none;
-        padding: 20px 22px;
-      }
-
-      .chat-header,
-      .chat-messages {
-        padding-left: 22px;
-        padding-right: 22px;
-      }
+      .chat-area { grid-row: 2; border-right: none; }
+      .input-bar { grid-row: 3; border-right: none; padding: 20px 22px; }
+      .chat-header, .chat-messages { padding-left: 22px; padding-right: 22px; }
     }
   </style>
 </head>
@@ -585,7 +558,7 @@
   <aside class="sidebar">
     <div>
       <div class="sidebar-title">Add website</div>
-      <div class="sidebar-desc">Scrapes & indexes into ChromaDB</div>
+      <div class="sidebar-desc">Scrapes &amp; indexes into ChromaDB</div>
       <form method="POST" action="/ingest-url">
         <input type="url" name="url" placeholder="https://example.com" value="{{ url or '' }}"/>
         <button type="submit" class="scrape-btn">Scrape &amp; Index</button>
@@ -756,6 +729,31 @@
   </aside>
 
 </div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     Alian Software Chatbot Widget
+     Reads from FastAPI on :8000 — purely read-only (no DB writes).
+     chatbot.css and chatbot.js live in the widget/ folder served by FastAPI.
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+  window.AlianChatConfig = {
+    apiBase:        'http://localhost:8000',
+    siteName:       'Alian Software',
+    assistantName:  'Alian Assistant',
+    placeholder:    'Ask anything about Alian Software…',
+    welcomeTitle:   "Hi, I'm the Alian Assistant",
+    welcomeMessage: 'Ask me about our services, technologies, pricing, or anything on the Alian Software website.',
+    hints: [
+      'What services do you offer?',
+      'How can I get started?',
+      'What technologies do you use?',
+      'Tell me about your team',
+    ],
+  };
+</script>
+<script src="http://localhost:8000/widget/chatbot.js"></script>
+<!-- ══════════════════════════════════════════════════════════════════ -->
+
 <script>
   const chatMessages = document.querySelector(".chat-messages");
   if (chatMessages) {

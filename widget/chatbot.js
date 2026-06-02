@@ -86,10 +86,12 @@
         #chatbot-panel button{font:inherit}
         #chatbot-panel .rc-sidebar{width:220px;min-width:220px;background:#060d1a;border-right:1px solid #152033;display:flex;flex-direction:column}
         #chatbot-panel .rc-sidebar-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #152033}
-        #chatbot-panel .rc-sidebar-actions{display:flex;gap:6px;align-items:center}
+        #chatbot-panel .rc-sidebar-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-start}
         #chatbot-panel .rc-new-chat-btn,
-        #chatbot-panel .rc-clear-history-btn{display:inline-flex;gap:6px;align-items:center;border:1px solid #243857;background:#0f1d33;color:#dce8f5;border-radius:7px;padding:7px 10px;cursor:pointer}
-        #chatbot-panel .rc-clear-history-btn{color:#fda4af}
+        #chatbot-panel .rc-clear-history-btn{display:inline-flex;align-items:center;border:1px solid #243857;background:#0f1d33;color:#dce8f5;border-radius:7px;cursor:pointer}
+        #chatbot-panel .rc-new-chat-btn{gap:4px;padding:7px 9px}
+        #chatbot-panel .rc-new-chat-btn svg{width:14px;height:14px}
+        #chatbot-panel .rc-clear-history-btn{padding:8px;width:36px;height:36px;justify-content:center;color:#fda4af}
         #chatbot-panel .rc-clear-history-btn:hover{background:#162a40}
         #chatbot-panel .rc-clear-history-btn:disabled{opacity:.35;cursor:wait}
         #chatbot-panel .rc-session-list{flex:1;padding:8px;overflow:auto;font-size:13px;color:#6e90b8}
@@ -184,7 +186,7 @@
                 ${ICON.plus}<span>New</span>
               </button>
               <button class="rc-clear-history-btn" id="rc-clear-history" type="button" aria-label="Clear chat history">
-                ${ICON.trash}<span>Clear</span>
+                ${ICON.trash}
               </button>
             </div>
           </div>

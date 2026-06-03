@@ -72,68 +72,67 @@
       const base = document.createElement('style');
       base.setAttribute('data-rc-base-css', '1');
       base.textContent = `
-        #rc-root{position:relative;z-index:2147483647;font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+        #rc-root{position:relative;z-index:2147483647;font-family:var(--rc-font, system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI",sans-serif)}
         #rc-root,#rc-root *{box-sizing:border-box}
-        #chatbot-fab{position:fixed;right:28px;bottom:28px;width:56px;height:56px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(29,78,216,.45),0 2px 8px rgba(0,0,0,.4);cursor:pointer;z-index:2147483647;padding:0}
+        #chatbot-fab{position:fixed;right:28px;bottom:28px;width:56px;height:56px;border-radius:50%;border:1px solid rgba(24,34,17,.22);background:linear-gradient(145deg,#f1dfbb 0%,#ead8b2 100%);color:#182211;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer;z-index:2147483647;padding:0}
         #chatbot-fab svg{width:24px;height:24px;fill:currentColor}
         #chatbot-fab .rc-fab-icon{position:absolute;width:24px;height:24px;display:flex;align-items:center;justify-content:center}
         #chatbot-fab .rc-fab-icon-close{opacity:0}
         #chatbot-fab.rc-open .rc-fab-icon-chat{opacity:0}
         #chatbot-fab.rc-open .rc-fab-icon-close{opacity:1}
-        #chatbot-panel{position:fixed;right:28px;bottom:100px;width:min(780px,calc(100vw - 32px));height:min(610px,calc(100vh - 128px));display:none;overflow:hidden;border-radius:16px;background:#0b1629;color:#dce8f5;border:1px solid #1c2e47;box-shadow:0 32px 80px rgba(0,0,0,.65);z-index:2147483646}
+        #chatbot-panel{position:fixed;right:28px;bottom:100px;width:min(780px,calc(100vw - 32px));height:min(610px,calc(100vh - 128px));display:none;overflow:hidden;border-radius:16px;background:#ead8b2;color:#1a2012;border:1px solid #d7c39a;box-shadow:0 28px 60px rgba(0,0,0,.5);z-index:2147483646}
         #chatbot-panel.rc-open{display:flex}
         #chatbot-panel svg{width:18px;height:18px;fill:currentColor;flex:0 0 auto}
         #chatbot-panel button{font:inherit}
-        #chatbot-panel .rc-sidebar{width:220px;min-width:220px;background:#060d1a;border-right:1px solid #152033;display:flex;flex-direction:column}
-        #chatbot-panel .rc-sidebar-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #152033}
+        #chatbot-panel .rc-sidebar{width:220px;min-width:220px;background:#dfc99d;border-right:1px solid #cbb688;display:flex;flex-direction:column}
+        #chatbot-panel .rc-sidebar-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #cbb688}
         #chatbot-panel .rc-sidebar-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-start}
-        #chatbot-panel .rc-new-chat-btn,
-        #chatbot-panel .rc-clear-history-btn{display:inline-flex;align-items:center;border:1px solid #243857;background:#0f1d33;color:#dce8f5;border-radius:7px;cursor:pointer}
+        #chatbot-panel .rc-new-chat-btn,#chatbot-panel .rc-clear-history-btn{display:inline-flex;align-items:center;border:1px solid #cbb688;background:#f1dfbb;color:#1a2012;border-radius:7px;cursor:pointer}
         #chatbot-panel .rc-new-chat-btn{gap:4px;padding:7px 9px}
         #chatbot-panel .rc-new-chat-btn svg{width:14px;height:14px}
         #chatbot-panel .rc-clear-history-btn{padding:8px;width:36px;height:36px;justify-content:center;color:#fda4af}
-        #chatbot-panel .rc-clear-history-btn:hover{background:#162a40}
+        #chatbot-panel .rc-clear-history-btn:hover{background:#e7d2a8}
         #chatbot-panel .rc-clear-history-btn:disabled{opacity:.35;cursor:wait}
-        #chatbot-panel .rc-session-list{flex:1;padding:8px;overflow:auto;font-size:13px;color:#6e90b8}
+        #chatbot-panel .rc-session-list{flex:1;padding:8px;overflow:auto;font-size:13px;color:#45502f}
         #chatbot-panel .rc-date-group{padding:10px 6px 4px}
-        #chatbot-panel .rc-date-label{font-size:10px;font-weight:700;color:#304565;text-transform:uppercase;letter-spacing:.08em}
+        #chatbot-panel .rc-date-label{font-size:10px;font-weight:700;color:#647144;text-transform:uppercase;letter-spacing:.08em}
         #chatbot-panel .rc-session-item{padding:8px 9px;border-radius:7px;border:1px solid transparent;cursor:pointer;margin-bottom:2px;min-width:0}
-        #chatbot-panel .rc-session-item:hover{background:#0f1d33;border-color:#1c2e47}
-        #chatbot-panel .rc-session-item.rc-active{background:rgba(29,78,216,.18);border-color:#1d4ed8}
+        #chatbot-panel .rc-session-item:hover{background:#e7d2a8;border-color:#cbb688}
+        #chatbot-panel .rc-session-item.rc-active{background:rgba(24,34,17,.12);border-color:#223016}
         #chatbot-panel .rc-session-row{display:flex;align-items:center;gap:6px;min-width:0}
         #chatbot-panel .rc-session-text{min-width:0;flex:1}
-        #chatbot-panel .rc-session-title{font-size:12px;color:#dce8f5;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
-        #chatbot-panel .rc-session-meta{font-size:10px;color:#304565;margin-top:2px}
-        #chatbot-panel .rc-session-delete{width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:#6e90b8;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.75;flex:0 0 auto}
+        #chatbot-panel .rc-session-title{font-size:12px;color:#1a2012;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+        #chatbot-panel .rc-session-meta{font-size:10px;color:#647144;margin-top:2px}
+        #chatbot-panel .rc-session-delete{width:24px;height:24px;border:0;border-radius:6px;background:transparent;color:#45502f;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:.75;flex:0 0 auto}
         #chatbot-panel .rc-session-delete:hover{background:rgba(220,38,38,.14);color:#fca5a5;opacity:1}
         #chatbot-panel .rc-session-delete:disabled{opacity:.35;cursor:wait}
         #chatbot-panel .rc-session-delete svg{width:14px;height:14px}
-        #chatbot-panel .rc-session-empty{padding:24px 10px;text-align:center;color:#6e90b8;font-size:12px;line-height:1.55}
-        #chatbot-panel .rc-main{min-width:0;flex:1;display:flex;flex-direction:column;background:#0b1629}
-        #chatbot-panel .rc-header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #152033;background:#0f1d33}
+        #chatbot-panel .rc-session-empty{padding:24px 10px;text-align:center;color:#45502f;font-size:12px;line-height:1.55}
+        #chatbot-panel .rc-main{min-width:0;flex:1;display:flex;flex-direction:column;background:#ead8b2}
+        #chatbot-panel .rc-header{height:64px;display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #cbb688;background:#ead8b2}
         #chatbot-panel .rc-header-left{display:flex;align-items:center;gap:10px}
-        #chatbot-panel .rc-header-avatar,#chatbot-panel .rc-welcome-icon,#chatbot-panel .rc-avatar-bot{width:34px;height:34px;min-width:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff}
-        #chatbot-panel .rc-header-name{font-weight:600;color:#fff}
-        #chatbot-panel .rc-header-status{font-size:12px;color:#6e90b8}
-        #chatbot-panel .rc-close-btn{width:32px;height:32px;border:0;border-radius:8px;background:#121f38;color:#dce8f5;display:flex;align-items:center;justify-content:center;cursor:pointer}
+        #chatbot-panel .rc-header-avatar,#chatbot-panel .rc-welcome-icon,#chatbot-panel .rc-avatar-bot{width:34px;height:34px;min-width:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,#223016,#141d0f);color:#ead8b2}
+        #chatbot-panel .rc-header-name{font-weight:600;color:#141d0f}
+        #chatbot-panel .rc-header-status{font-size:12px;color:#45502f}
+        #chatbot-panel .rc-close-btn{width:32px;height:32px;border:0;border-radius:8px;background:#f1dfbb;color:#1a2012;display:flex;align-items:center;justify-content:center;cursor:pointer}
         #chatbot-panel .rc-messages{flex:1;overflow:auto;padding:18px;display:flex;flex-direction:column;gap:14px}
         #chatbot-panel .rc-welcome{margin:auto;text-align:center;max-width:430px;display:flex;flex-direction:column;align-items:center;gap:10px}
-        #chatbot-panel .rc-welcome-title{font-size:20px;font-weight:600;color:#fff}
-        #chatbot-panel .rc-welcome-sub{font-size:14px;color:#9db3cc;line-height:1.5}
+        #chatbot-panel .rc-welcome-title{font-size:20px;font-weight:600;color:#141d0f}
+        #chatbot-panel .rc-welcome-sub{font-size:14px;color:#45502f;line-height:1.5}
         #chatbot-panel .rc-hints{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:8px}
-        #chatbot-panel .rc-hint-btn{border:1px solid #243857;background:#0f1d33;color:#dce8f5;border-radius:999px;padding:7px 10px;cursor:pointer}
-        #chatbot-panel .rc-input-area{display:flex;gap:10px;align-items:flex-end;padding:14px;border-top:1px solid #152033;background:#0f1d33}
-        #chatbot-panel .rc-textarea{flex:1;min-height:42px;max-height:120px;resize:none;border:1px solid #243857;border-radius:10px;background:#0c1525;color:#fff;padding:11px 12px;font:inherit;outline:none}
-        #chatbot-panel .rc-send-btn{width:42px;height:42px;border:0;border-radius:10px;background:#2563eb;color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
-        #chatbot-panel .rc-footer{padding:8px 14px;border-top:1px solid #152033;color:#6e90b8;font-size:11px;text-align:center}
+        #chatbot-panel .rc-hint-btn{border:1px solid #cbb688;background:#f1dfbb;color:#1a2012;border-radius:999px;padding:7px 10px;cursor:pointer}
+        #chatbot-panel .rc-input-area{display:flex;gap:10px;align-items:flex-end;padding:14px;border-top:1px solid #cbb688;background:#ead8b2}
+        #chatbot-panel .rc-textarea{flex:1;min-height:42px;max-height:120px;resize:none;border:1px solid #cbb688;border-radius:10px;background:#f1dfbb;color:#1a2012;padding:11px 12px;font:inherit;outline:none}
+        #chatbot-panel .rc-send-btn{width:42px;height:42px;border:0;border-radius:10px;background:linear-gradient(145deg,#223016 0%,#141d0f 100%);color:#ead8b2;display:flex;align-items:center;justify-content:center;cursor:pointer}
+        #chatbot-panel .rc-footer{padding:8px 14px;border-top:1px solid #cbb688;color:#45502f;font-size:11px;text-align:center}
         #chatbot-panel .rc-row,#chatbot-panel .rc-typing-row{display:flex;gap:10px;max-width:90%;align-items:flex-start}
         #chatbot-panel .rc-row-user{align-self:flex-end;flex-direction:row-reverse}
-        #chatbot-panel .rc-avatar{width:28px;height:28px;min-width:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;font-size:12px;font-weight:700}
+        #chatbot-panel .rc-avatar{width:28px;height:28px;min-width:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:linear-gradient(140deg,#223016,#141d0f);color:#ead8b2;font-size:12px;font-weight:700}
         #chatbot-panel .rc-avatar svg{width:14px;height:14px}
-        #chatbot-panel .rc-bubble{padding:10px 12px;border-radius:12px;background:#0c1b33;border:1px solid #172845;color:#dce8f5;line-height:1.45;font-size:14px;overflow-wrap:anywhere}
-        #chatbot-panel .rc-bubble-user{background:#162f62;border-color:#1d50c0;color:#fff}
-        #chatbot-panel .rc-typing-bubble{display:flex;gap:5px;padding:12px;border-radius:12px;background:#0c1b33;border:1px solid #172845}
-        #chatbot-panel .rc-dot{width:6px;height:6px;border-radius:50%;background:#6e90b8}
+        #chatbot-panel .rc-bubble{padding:10px 12px;border-radius:12px;background:#f1dfbb;border:1px solid #d7c39a;color:#1a2012;line-height:1.45;font-size:14px;overflow-wrap:anywhere}
+        #chatbot-panel .rc-bubble-user{background:#182211;border-color:#223016;color:#ead8b2}
+        #chatbot-panel .rc-typing-bubble{display:flex;gap:5px;padding:12px;border-radius:12px;background:#f1dfbb;border:1px solid #d7c39a}
+        #chatbot-panel .rc-dot{width:6px;height:6px;border-radius:50%;background:#45502f}
         #chatbot-panel .rc-error-msg{padding:10px 12px;border-radius:10px;background:rgba(220,38,38,.12);border:1px solid rgba(220,38,38,.3);color:#fca5a5;font-size:13px}
         @media(max-width:720px){#chatbot-panel{right:12px;bottom:84px;width:calc(100vw - 24px);height:min(620px,calc(100vh - 104px))}#chatbot-panel .rc-sidebar{display:none}}
       `;

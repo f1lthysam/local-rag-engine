@@ -4,34 +4,36 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RAG Engine</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter&family=Roboto+Mono&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500&display=swap');
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg:        #0a0a0ab6;
-      --surface:   #141414;
-      --surface2:  #1c1c1c;
-      --border:    #252525;
-      --border2:   #333;
-      --separator: #ffffff;
-      --text:      #e8e8e8bf;
-      --muted:     #eeebebc4;
-      --accent:    rgba(255, 136, 0, 0.704);
-      --danger:    #c0392b;
-      --success:   #27ae60;
-      --mono:      'Roboto Mono', monospace;
-      --sans:      'Inter','IBM Plex Sans', sans-serif;
-    }
-    body {
-      font-family: var(--sans);
+      --bg: #050507;
+      --bg-gradient: radial-gradient(circle at 12% 15%, rgba(255,140,38,0.14), transparent 18%),
+                    radial-gradient(circle at 88% 12%, rgba(255,140,38,0.08), transparent 16%),
+                    radial-gradient(circle at 50% 88%, rgba(255,140,38,0.05), transparent 20%),
+                    #050507;
+      --surface: #111214;
+      --surface2: #1b1a20;
+      --surface-glow: rgba(255,140,38,0.08);
+      --border: rgba(255,255,255,0.08);
+      --border2: rgba(255,255,255,0.1);
+      --separator: rgba(255,255,255,0.08);
+      --text: #f4ece0;
+      --muted: #b8aa9a;
+      --accent: #ff8c26;
+      --accent-soft: rgba(255,140,38,0.16);
+      --danger: #c0392b;
+      --success: #27ae60;
+      --mono: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
+      --sans: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans";
     }
 
-    .code, pre, textarea {
-      font-family: var(--mono);
-    }
+    body { font-family: var(--sans); }
+    .code, pre, textarea { font-family: var(--sans); }
 
     html, body {
       height: 100%;
@@ -43,7 +45,18 @@
       line-height: 1.55;
     }
 
-    /* ── Layout: 3-column ── */
+    /* Use Inter variable weight by default and improve legibility */
+    :root { font-variation-settings: 'wght' 450; }
+    body { font-weight: 450; }
+
+    /* Improve rendering to match modern UI fonts (Inter) */
+    html, body {
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-rendering: optimizeLegibility;
+    }
+
+    /* ── Layout ── */
     .layout {
       display: grid;
       grid-template-columns: 300px minmax(0, 1fr) 330px;
@@ -51,8 +64,6 @@
       height: 100vh;
       min-height: 0;
       width: 100vw;
-      max-width: none;
-      margin: 0;
     }
 
     /* ── Left sidebar ── */
@@ -149,10 +160,7 @@
       cursor: pointer;
       transition: color 0.15s, border-color 0.15s;
     }
-    .clear-chat-btn:hover {
-      color: var(--accent);
-      border-color: var(--accent);
-    }
+    .clear-chat-btn:hover { color: var(--accent); border-color: var(--accent); }
 
     .model-tag {
       font-family: var(--mono);
@@ -161,7 +169,96 @@
     }
     .model-tag span { color: var(--accent); }
 
-    /* ── Center: chat area ── */
+    /* ── Dataset selector ── */
+    .dataset-section { display: flex; flex-direction: column; gap: 10px; }
+
+    .dataset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .dataset-item {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 9px 11px;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+      word-break: break-all;
+      line-height: 1.4;
+      position: relative;
+    }
+    .dataset-item:hover {
+      border-color: var(--accent);
+      background: var(--surface2);
+      color: var(--text);
+    }
+    .dataset-item.active {
+      border-color: var(--accent);
+      background: var(--surface2);
+      color: var(--accent);
+    }
+    .dataset-item.active::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--accent);
+      border-radius: 5px 0 0 5px;
+    }
+
+    .dataset-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--border2);
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .dataset-item.active .dataset-dot { background: var(--accent); }
+
+    .dataset-name {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .dataset-active-badge {
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      background: rgba(255,136,0,0.15);
+      color: var(--accent);
+      padding: 2px 6px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    .dataset-active-bar {
+      padding: 8px 11px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,136,0,0.35);
+      background: rgba(255,136,0,0.06);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .dataset-active-bar span { flex: 1; word-break: break-all; }
+
+    /* ── Center chat ── */
     .chat-area {
       grid-column: 2;
       grid-row: 1 / 3;
@@ -176,32 +273,159 @@
       border-bottom: 1px solid var(--border);
     }
     .brand-title {
+      position: relative;
       display: flex;
       align-items: center;
       gap: 16px;
+      width: fit-content;
+      max-width: 100%;
+      padding: 14px 18px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(234,216,178,0.13), rgba(24,34,17,0.18));
+      border: 1px solid rgba(234,216,178,0.18);
+      box-shadow:
+        0 0 42px rgba(24,34,17,0.5),
+        0 0 26px rgba(234,216,178,0.1),
+        inset 0 0 18px rgba(234,216,178,0.06);
+      isolation: isolate;
+      overflow: hidden;
+      transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
     }
-    .brand-logo {
-      width: 56px;
-      height: 56px;
-      object-fit: contain;
-      background: #f5f5f5;
-      border: 1px solid rgba(255, 255, 255, 0.85);
+    .brand-title::before {
+      content: '';
+      position: absolute;
+      inset: -12px;
+      border-radius: 22px;
+      background: radial-gradient(circle at 24% 42%, rgba(234,216,178,0.22), transparent 42%),
+                  radial-gradient(circle at 74% 46%, rgba(24,34,17,0.58), transparent 62%);
+      filter: blur(14px);
+      opacity: 0.92;
+      z-index: -1;
+      pointer-events: none;
+    }
+    .brand-title::after {
+      content: '';
+      position: absolute;
+      top: -30%;
+      left: -55%;
+      width: 44%;
+      height: 160%;
+      background: linear-gradient(100deg, transparent, rgba(255,255,255,0.34), transparent);
+      transform: skewX(-18deg);
+      opacity: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .brand-title:hover,
+    .brand-title.pulse {
+      transform: translateY(-2px);
+      border-color: rgba(234,216,178,0.34);
+      box-shadow:
+        0 0 54px rgba(24,34,17,0.62),
+        0 0 34px rgba(234,216,178,0.16),
+        inset 0 0 22px rgba(234,216,178,0.08);
+    }
+    .brand-title.shimmer::after {
+      animation: brandBoxShine 0.9s ease forwards;
+      opacity: 1;
+    }
+    .brand-title > * {
+      position: relative;
+      z-index: 1;
+    }
+    .brand-logo-wrap {
+      width: 74px; height: 74px;
+      display: inline-flex; align-items: center; justify-content: center;
       border-radius: 50%;
-      padding: 7px;
+      padding: 8px;
+      background: linear-gradient(180deg, rgba(255,250,245,0.98), rgba(255,245,235,0.98));
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 6px 22px rgba(255,140,38,0.06);
       flex: 0 0 auto;
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
     }
+    .brand-logo-wrap:hover { transform: translateY(-2px); box-shadow: 0 16px 46px rgba(0,0,0,0.42), 0 10px 36px rgba(255,140,38,0.08); }
+
+    .brand-logo {
+      width: 56px; height: 56px;
+      object-fit: contain;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      padding: 0;
+      box-shadow: none;
+      transition: transform 0.12s ease, filter 0.12s ease;
+      filter: none;
+      display: block;
+    }
+    .brand-logo:hover { transform: scale(1.04); }
     .chat-header h1 {
       font-family: var(--mono);
-      font-size: 19px;
+      font-size: 20px;
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--accent);
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      font-weight: 700;
+      -webkit-font-smoothing: antialiased;
     }
+    .chat-header h1::before {
+      content: '';
+      position: absolute;
+      left: -60%; top: 0;
+      height: 100%; width: 60%;
+      background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.28), rgba(255,255,255,0.06));
+      transform: skewX(-20deg);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .chat-header h1.shimmer::before {
+      animation: shine 0.9s ease forwards;
+      opacity: 1;
+    }
+    @keyframes brandBoxShine {
+      0%   { left: -55%; opacity: 0; }
+      35%  { opacity: 1; }
+      100% { left: 125%; opacity: 0; }
+    }
+    @keyframes shine {
+      0%   { left: -60%; opacity: 0; }
+      40%  { left: 120%; opacity: 1; }
+      100% { left: 120%; opacity: 0; }
+    }
+    @keyframes logoPulse {
+      0%   { box-shadow: 0 8px 20px rgba(255,140,38,0.12); }
+      50%  { box-shadow: 0 18px 48px rgba(255,140,38,0.28); }
+      100% { box-shadow: 0 8px 20px rgba(255,140,38,0.12); }
+    }
+    .brand-logo.pulse { animation: logoPulse 1.6s ease-in-out infinite; }
+    .brand-logo.animate { transform: scale(1.04); box-shadow: 0 14px 44px rgba(255,140,38,0.28); }
     .chat-header p {
       font-family: var(--mono);
       font-size: 14px;
       color: var(--muted);
       margin-top: 4px;
+    }
+
+    /* Dataset filter badge shown in chat header */
+    .chat-dataset-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,136,0,0.35);
+      background: rgba(255,136,0,0.07);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .chat-dataset-badge .badge-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
     }
 
     .chat-messages {
@@ -214,14 +438,8 @@
       min-height: 0;
     }
 
-    .msg {
-      display: flex;
-      flex-direction: column;
-      gap: 9px;
-      max-width: 94%;
-    }
-
-    .msg.user { align-self: flex-end; align-items: flex-end; }
+    .msg { display: flex; flex-direction: column; gap: 9px; max-width: 94%; }
+    .msg.user      { align-self: flex-end;   align-items: flex-end;   }
     .msg.assistant { align-self: flex-start; align-items: flex-start; }
 
     .msg-label {
@@ -239,19 +457,8 @@
       line-height: 1.6;
       white-space: pre-wrap;
     }
-
-    .msg.user .msg-bubble {
-      background: var(--surface2);
-      border: 1px solid var(--border2);
-      color: var(--text);
-    }
-
-    .msg.assistant .msg-bubble {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text);
-    }
-
+    .msg.user .msg-bubble      { background: var(--surface2); border: 1px solid var(--border2); color: var(--text); }
+    .msg.assistant .msg-bubble { background: var(--surface);  border: 1px solid var(--border);  color: var(--text); }
     .msg.assistant.no-info .msg-bubble {
       border-left: 3px solid var(--danger);
       color: var(--muted);
@@ -259,303 +466,369 @@
       font-size: 16px;
     }
 
-    .msg.assistant.loading {
-      width: fit-content;
-      max-width: 94%;
-    }
-
+    .msg.assistant.loading { width: fit-content; max-width: 94%; }
     .msg.assistant.loading .msg-bubble {
-      display: inline-flex;
-      align-items: center;
-      width: auto;
-      min-width: 0;
-      max-width: 100%;
-      padding: 8px 12px;
-      overflow: hidden;
-      position: relative;
-      border-color: rgba(255, 136, 0, 0.45);
+      display: inline-flex; align-items: center;
+      width: auto; min-width: 0; max-width: 100%;
+      padding: 8px 12px; overflow: hidden; position: relative;
+      border-color: rgba(255,136,0,0.45);
     }
 
     .loading-copy {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      white-space: nowrap;
+      display: flex; align-items: center; gap: 10px;
+      color: var(--muted); font-family: var(--mono);
+      font-size: 13px; letter-spacing: 0.04em;
+      text-transform: uppercase; white-space: nowrap;
     }
-
-    .loading-dots {
-      display: inline-flex;
-      gap: 5px;
-    }
-
+    .loading-dots { display: inline-flex; gap: 5px; }
     .loading-dots span {
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background: var(--accent);
-      opacity: 0.35;
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent); opacity: 0.35;
       animation: loadingPulse 1.1s ease-in-out infinite;
     }
-
     .loading-dots span:nth-child(2) { animation-delay: 0.16s; }
     .loading-dots span:nth-child(3) { animation-delay: 0.32s; }
-
     @keyframes loadingPulse {
-      0%, 80%, 100% { transform: translateY(0); opacity: 0.35; }
-      40% { transform: translateY(-4px); opacity: 1; }
+      0%,80%,100% { transform: translateY(0); opacity: 0.35; }
+      40%          { transform: translateY(-4px); opacity: 1; }
     }
 
-    .turn {
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-    }
+    .turn { display: flex; flex-direction: column; gap: 18px; }
 
     .empty-state {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      color: var(--muted);
-      font-family: var(--mono);
-      font-size: 16px;
-      text-align: center;
-      padding: 24px;
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; color: var(--muted);
+      font-family: var(--mono); font-size: 16px;
+      text-align: center; padding: 24px;
     }
     .empty-state .big { font-size: 34px; margin-bottom: 6px; }
 
-    /* ── Input bar at bottom ── */
+    /* ── Input bar ── */
     .input-bar {
-      grid-column: 2;
-      grid-row: 3;
+      grid-column: 2; grid-row: 3;
       border-top: 1px solid var(--border);
       border-right: 1px solid var(--separator);
       padding: 16px 28px;
-      display: flex;
-      align-items: flex-end;
-      gap: 10px;
+      display: flex; align-items: flex-end; gap: 10px;
     }
 
-    .upload-form {
-      flex: 0 0 auto;
-    }
-
-    .upload-input {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      opacity: 0;
-      pointer-events: none;
-    }
-
+    .upload-form { flex: 0 0 auto; }
+    .upload-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
     .upload-btn {
-      width: 42px;
-      height: 42px;
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--accent);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--mono);
-      font-size: 28px;
-      line-height: 1;
+      width: 42px; height: 42px;
+      border: 1px solid var(--border2); border-radius: 8px;
+      background: var(--surface); color: var(--accent);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-family: var(--mono); font-size: 28px; line-height: 1;
       transition: border-color 0.15s, background 0.15s, opacity 0.15s;
     }
+    .upload-btn:hover { border-color: var(--accent); background: var(--surface2); }
+    .upload-btn.is-uploading { cursor: wait; opacity: 0.6; }
 
-    .upload-btn:hover {
-      border-color: var(--accent);
-      background: var(--surface2);
-    }
-
-    .upload-btn.is-uploading {
-      cursor: wait;
-      opacity: 0.6;
-    }
-
-    .input-wrap {
-      position: relative;
-      display: flex;
-      align-items: flex-end;
-      flex: 1 1 auto;
-    }
-
+    .input-wrap { position: relative; display: flex; align-items: flex-end; flex: 1 1 auto; }
     .input-wrap textarea {
       width: 100%;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 18px;
-      line-height: 1.6;
-      padding: 13px 58px 13px 18px;
-      resize: none;
-      outline: none;
-      min-height: 54px;
-      max-height: 150px;
-      transition: border-color 0.15s;
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: 10px; color: var(--text);
+      font-family: var(--sans); font-size: 18px; line-height: 1.6;
+      padding: 13px 58px 13px 18px; resize: none; outline: none;
+      min-height: 54px; max-height: 150px; transition: border-color 0.15s;
     }
     .input-wrap textarea::placeholder { color: var(--muted); }
     .input-wrap textarea:focus { border-color: var(--accent); }
 
     .send-btn {
-      position: absolute;
-      right: 10px;
-      bottom: 10px;
-      width: 34px;
-      height: 34px;
-      background: var(--accent);
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: opacity 0.15s;
-      flex-shrink: 0;
+      position: absolute; right: 10px; bottom: 10px;
+      width: 34px; height: 34px;
+      background: var(--accent); border: none; border-radius: 6px;
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      transition: opacity 0.15s; flex-shrink: 0;
     }
     .send-btn:hover { opacity: 0.85; }
-    .send-btn:disabled {
-      cursor: wait;
-      opacity: 0.6;
-    }
+    .send-btn:disabled { cursor: wait; opacity: 0.6; }
     .send-btn svg { width: 17px; height: 17px; fill: #ffffff; }
 
-    /* ── Right panel: stats ── */
+    /* ── Right stats panel ── */
     .stats-panel {
-      grid-column: 3;
-      grid-row: 1 / 4;
-      padding: 22px 22px;
-      display: flex;
-      flex-direction: column;
-      gap: 18px;
-      overflow-y: auto;
+      grid-column: 3; grid-row: 1 / 4;
+      padding: 22px; display: flex; flex-direction: column;
+      gap: 18px; overflow-y: auto;
     }
+    .stats-title { font-family: var(--mono); font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+    .stat-block  { display: flex; flex-direction: column; gap: 7px; }
+    .stat-label  { font-family: var(--mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+    .stat-value  { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--text); }
+    .stat-value.small { font-size: 18px; }
 
-    .stats-title {
-      font-family: var(--mono);
-      font-size: 14px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .stat-block {
-      display: flex;
-      flex-direction: column;
-      gap: 7px;
-    }
-
-    .stat-label {
-      font-family: var(--mono);
-      font-size: 13px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .stat-value {
-      font-family: var(--mono);
-      font-size: 24px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .stat-value.small {
-      font-size: 18px;
-    }
-
-    .conf-bar-track {
-      height: 5px;
-      background: var(--border2);
-      border-radius: 2px;
-      overflow: hidden;
-      margin-top: 4px;
-    }
-    .conf-bar-fill {
-      height: 100%;
-      border-radius: 2px;
-      background: var(--accent);
-      transition: width 0.4s ease;
-    }
+    .conf-bar-track { height: 5px; background: var(--border2); border-radius: 2px; overflow: hidden; margin-top: 4px; }
+    .conf-bar-fill  { height: 100%; border-radius: 2px; background: var(--accent); transition: width 0.4s ease; }
 
     .token-row {
-      display: flex;
-      justify-content: space-between;
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--muted);
-      padding: 4px 0;
-      border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      font-family: var(--mono); font-size: 14px; color: var(--muted);
+      padding: 4px 0; border-bottom: 1px solid var(--border);
     }
     .token-row:last-child { border-bottom: none; }
     .token-row span { color: var(--text); font-weight: 500; }
 
     .source-item {
-      font-family: var(--mono);
-      font-size: 13px;
-      color: var(--muted);
-      padding: 8px 10px;
-      background: var(--surface);
+      font-family: var(--mono); font-size: 13px; color: var(--muted);
+      padding: 8px 10px; background: var(--surface);
       border-left: 2px solid var(--border2);
-      word-break: break-all;
-      line-height: 1.4;
+      word-break: break-all; line-height: 1.4;
     }
 
-    .stats-divider {
-      border: none;
-      border-top: 1px solid var(--border);
-    }
+    .stats-divider { border: none; border-top: 1px solid var(--border); }
+    .no-stats { font-family: var(--mono); font-size: 13px; color: var(--muted); text-align: center; padding-top: 18px; }
 
-    .no-stats {
+    /* Dataset filter indicator in stats */
+    .stat-filter-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 3px;
+      border: 1px solid rgba(255,136,0,0.35);
+      background: rgba(255,136,0,0.07);
       font-family: var(--mono);
-      font-size: 13px;
-      color: var(--muted);
-      text-align: center;
-      padding-top: 18px;
+      font-size: 12px;
+      color: var(--accent);
+      word-break: break-all;
     }
 
     @media (max-width: 1050px) {
-      .layout {
-        grid-template-columns: 260px minmax(0, 1fr);
-      }
+      .layout { grid-template-columns: 260px minmax(0,1fr); }
       .stats-panel { display: none; }
     }
-
     @media (max-width: 760px) {
-      html, body { font-size: 16px; }
-      .layout {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr auto;
-      }
+      .layout { grid-template-columns: 1fr; grid-template-rows: auto 1fr auto; }
       .sidebar, .chat-area, .input-bar { grid-column: 1; }
-      .sidebar {
-        grid-row: 1;
-        border-right: none;
-        border-bottom: 1px solid var(--border);
-        padding: 22px;
-      }
+      .sidebar { grid-row: 1; border-right: none; border-bottom: 1px solid var(--border); padding: 22px; }
       .chat-area { grid-row: 2; border-right: none; }
       .input-bar { grid-row: 3; border-right: none; padding: 20px 22px; }
       .chat-header, .chat-messages { padding-left: 22px; padding-right: 22px; }
     }
   </style>
+  <style>
+    :root {
+      --bg: #050507;
+      --bg-gradient: radial-gradient(circle at 12% 15%, rgba(255,140,38,0.14), transparent 18%),
+                    radial-gradient(circle at 88% 12%, rgba(255,140,38,0.08), transparent 16%),
+                    radial-gradient(circle at 50% 88%, rgba(255,140,38,0.05), transparent 20%),
+                    #050507;
+    }
+
+    html, body {
+      background: var(--bg-gradient);
+      color: #f4ece0;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(255,140,38,0.08), transparent 16%),
+                  radial-gradient(circle at 80% 18%, rgba(255,140,38,0.05), transparent 14%);
+      pointer-events: none;
+    }
+
+    .layout {
+      background: rgba(255,255,255,0.02);
+      backdrop-filter: blur(6px);
+    }
+
+    .sidebar, .chat-area, .stats-panel, .input-bar {
+      background: rgba(12,12,13,0.94);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+
+    .sidebar input[type="url"] {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      box-shadow: none;
+    }
+    .sidebar input[type="url"]:focus {
+      box-shadow: 0 0 0 4px rgba(255,140,38,0.09);
+    }
+
+    .scrape-btn {
+      border-radius: 14px;
+      background: linear-gradient(135deg, #ff8c26 0%, #ffb86b 100%);
+      box-shadow: 0 16px 36px rgba(255,140,38,0.24);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    }
+    .scrape-btn:hover { transform: translateY(-1px); opacity: 0.98; box-shadow: 0 0 28px rgba(255,140,38,0.45), 0 16px 36px rgba(255,140,38,0.18); }
+
+    .notice {
+      border-radius: 14px;
+      background: rgba(255,140,38,0.07);
+      border-color: rgba(255,255,255,0.08);
+    }
+
+    .clear-chat-btn {
+      border-radius: 14px;
+      border-color: rgba(235, 92, 92, 0.4);
+      background: rgba(235, 92, 92, 0.08);
+      color: #f0c5c5;
+      box-shadow: inset 0 0 0 1px rgba(235, 92, 92, 0.15);
+      transition: color 0.12s ease, border-color 0.12s ease, transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease;
+    }
+    .clear-chat-btn:hover {
+      color: #ffe6e6;
+      background: rgba(235, 92, 92, 0.16);
+      border-color: rgba(235, 92, 92, 0.8);
+      box-shadow: 0 0 30px rgba(235, 92, 92, 0.35);
+      transform: translateY(-1px);
+    }
+
+    .model-tag {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+    }
+
+    .dataset-item {
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.02);
+      transition: border-color 0.18s, background 0.18s, transform 0.18s, box-shadow 0.18s;
+    }
+    .dataset-item:hover {
+      border-color: rgba(255,140,38,0.45);
+      background: rgba(255,140,38,0.1);
+      color: var(--text);
+      box-shadow: 0 14px 30px rgba(255,140,38,0.08);
+      transform: translateY(-1px);
+    }
+    .dataset-item.active {
+      border-color: rgba(255,140,38,0.45);
+      background: rgba(255,140,38,0.12);
+      box-shadow: 0 0 28px rgba(255,140,38,0.1);
+      color: var(--accent);
+    }
+    .dataset-active-badge {
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    .chat-area {
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+    .chat-header {
+      position: relative;
+      overflow: hidden;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+    }
+    .chat-header::after {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: -30px;
+      width: 180px;
+      height: 180px;
+      background: radial-gradient(circle, rgba(255,140,38,0.18), transparent 55%);
+      pointer-events: none;
+    }
+    .chat-header h1 {
+      text-shadow: 0 0 22px rgba(255,140,38,0.18);
+    }
+
+    .chat-dataset-badge {
+      background: rgba(255,140,38,0.1);
+      box-shadow: 0 0 18px rgba(255,140,38,0.08);
+      border-radius: 999px;
+    }
+
+    .chat-messages {
+      background: linear-gradient(180deg, rgba(255,140,38,0.02), transparent 24%);
+      padding: 24px 30px;
+      gap: 18px;
+    }
+
+    .msg-bubble {
+      border-radius: 14px;
+      box-shadow: 0 16px 40px rgba(0,0,0,0.18);
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+    .msg.user .msg-bubble {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .msg.assistant .msg-bubble {
+      background: linear-gradient(180deg, #141416, #1b161f);
+      border: 1px solid rgba(255,140,38,0.35);
+    }
+    .msg-bubble:hover { transform: translateY(-1px); }
+
+    .empty-state .big {
+      font-size: 40px;
+      color: var(--accent);
+      text-shadow: 0 0 24px rgba(255,140,38,0.34);
+      animation: glowPulse 3s ease-in-out infinite;
+    }
+    @keyframes glowPulse {
+      0%,100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.04); opacity: 0.92; }
+    }
+
+    .input-bar {
+      background: rgba(18,18,20,0.96);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      border-right: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .upload-btn {
+      border-radius: 14px;
+      border-color: rgba(255,140,38,0.25);
+      background: rgba(255,255,255,0.04);
+      transition: transform 0.12s ease, box-shadow 0.12s ease;
+    }
+    .upload-btn:hover {
+      background: rgba(255,140,38,0.16);
+      box-shadow: 0 0 32px rgba(255,140,38,0.24);
+      transform: translateY(-1px);
+    }
+
+    .input-wrap textarea {
+      background: rgba(24,24,26,0.96);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 16px;
+      padding: 16px 68px 16px 18px;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .input-wrap textarea:focus {
+      box-shadow: 0 0 0 4px rgba(255,140,38,0.1);
+    }
+
+    .send-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, #ff8c26, #ffb86b);
+      box-shadow: 0 0 24px rgba(255,140,38,0.3);
+      transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+    }
+    .send-btn:hover { transform: translateY(-1px); box-shadow: 0 0 36px rgba(255,140,38,0.5); opacity: 0.96; }
+
+    .stats-panel {
+      background: rgba(12,12,13,0.96);
+      border-left: 1px solid rgba(255,255,255,0.08);
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+    }
+    .stat-block { padding: 16px; border-radius: 18px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.05); }
+    .conf-bar-track { height: 6px; background: rgba(255,255,255,0.06); }
+    .conf-bar-fill { background: linear-gradient(90deg, rgba(255,140,38,0.94), rgba(255,185,105,0.94)); }
+    .source-item { padding: 12px 14px; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,140,38,0.35); border-radius: 12px; }
+    .stat-filter-badge { border-radius: 999px; background: rgba(255,140,38,0.08); }
+  </style>
 </head>
 <body>
 <div class="layout">
 
-  <!-- ── Left sidebar: scraper ── -->
+  <!-- ── Left sidebar ── -->
   <aside class="sidebar">
+
+    <!-- Add website -->
     <div>
       <div class="sidebar-title">Add website</div>
       <div class="sidebar-desc">Scrapes &amp; indexes into ChromaDB</div>
@@ -574,6 +847,65 @@
 
     <hr class="sidebar-divider"/>
 
+    <!-- ── Dataset selector ── -->
+    <div class="dataset-section">
+      <div class="sidebar-title">Dataset</div>
+      <div class="sidebar-desc">Select a dataset to restrict answers to that source only.</div>
+
+      {% if datasets %}
+        <div class="dataset-list">
+
+          <!-- All datasets option -->
+          <form method="POST" action="/select-dataset">
+            <input type="hidden" name="dataset" value="__all__"/>
+            <button type="submit" class="dataset-item {% if not selected_dataset %}active{% endif %}"
+                    style="width:100%; text-align:left; background:none; cursor:pointer;">
+              <span class="dataset-dot"></span>
+              <span class="dataset-name">All datasets</span>
+              {% if not selected_dataset %}
+                <span class="dataset-active-badge">active</span>
+              {% endif %}
+            </button>
+          </form>
+
+          <!-- Individual dataset options -->
+          {% for ds in datasets %}
+            <form method="POST" action="/select-dataset">
+              <input type="hidden" name="dataset" value="{{ ds }}"/>
+              <button type="submit"
+                      class="dataset-item {% if selected_dataset == ds %}active{% endif %}"
+                      style="width:100%; text-align:left; background:none; cursor:pointer;"
+                      title="{{ ds }}">
+                <span class="dataset-dot"></span>
+                <span class="dataset-name">{{ ds }}</span>
+                {% if selected_dataset == ds %}
+                  <span class="dataset-active-badge">active</span>
+                {% endif %}
+              </button>
+            </form>
+          {% endfor %}
+
+        </div>
+
+        {% if selected_dataset %}
+          <div class="dataset-active-bar">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+              <circle cx="6" cy="6" r="5" stroke="rgba(255,136,0,0.7)" stroke-width="1.5"/>
+              <circle cx="6" cy="6" r="2.5" fill="rgba(255,136,0,0.85)"/>
+            </svg>
+            <span>Filtered: {{ selected_dataset }}</span>
+          </div>
+        {% endif %}
+
+      {% else %}
+        <div style="font-family:var(--mono);font-size:12px;color:var(--muted);">
+          No datasets found in data/
+        </div>
+      {% endif %}
+    </div>
+
+    <hr class="sidebar-divider"/>
+
     <form method="POST" action="/clear-chat">
       <button type="submit" class="clear-chat-btn">Clear chat</button>
     </form>
@@ -585,14 +917,24 @@
     <div class="model-tag">Embeddings<br><span>all-MiniLM-L6-v2</span></div>
   </aside>
 
-  <!-- ── Center: chat ── -->
+  <!-- ── Center chat ── -->
   <main class="chat-area">
     <div class="chat-header">
       <div class="brand-title">
-        <img class="brand-logo" src="/images/rag-removebg-preview.png" alt="RAG logo"/>
-        <h1>Local &mdash; RAG &mdash; Engine</h1>
+        <div class="brand-logo-wrap">
+          <img class="brand-logo" src="/images/rag-removebg-preview.png" alt="RAG logo"/>
+        </div>
+        <div>
+          <h1>Local &mdash; RAG &mdash; Engine</h1>
+          <p>Ask questions from your indexed documents</p>
+        </div>
       </div>
-      <p>Ask questions from your indexed documents</p>
+      {% if selected_dataset %}
+        <div class="chat-dataset-badge">
+          <span class="badge-dot"></span>
+          Filtered to: {{ selected_dataset }}
+        </div>
+      {% endif %}
     </div>
 
     <div class="chat-messages">
@@ -607,7 +949,7 @@
             {% if turn.result.no_info %}
               <div class="msg assistant no-info">
                 <div class="msg-label">RAG</div>
-                <div class="msg-bubble">No relevant information found in documents.</div>
+                <div class="msg-bubble">{{ turn.result.response }}</div>
               </div>
             {% else %}
               <div class="msg assistant">
@@ -621,7 +963,15 @@
         <div class="empty-state">
           <div class="big">⬡</div>
           <div>Ask anything from your documents</div>
-          <div style="font-size:14px; margin-top:6px;">Index a website using the panel on the left first</div>
+          {% if selected_dataset %}
+            <div style="font-size:14px;margin-top:6px;color:var(--accent);">
+              Restricted to: {{ selected_dataset }}
+            </div>
+          {% else %}
+            <div style="font-size:14px;margin-top:6px;">
+              Select a dataset on the left to restrict answers
+            </div>
+          {% endif %}
         </div>
       {% endif %}
     </div>
@@ -630,23 +980,15 @@
   <!-- ── Input bar ── -->
   <div class="input-bar">
     <form method="POST" action="/upload-file" enctype="multipart/form-data" class="upload-form">
-      <label class="upload-btn" for="document-upload" title="Upload a document" aria-label="Upload a document">+</label>
-      <input
-        id="document-upload"
-        class="upload-input"
-        type="file"
-        name="document"
-        accept=".pdf,.doc,.docx,.txt,.md,.markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,text/plain,text/markdown"
-      />
+      <label class="upload-btn" for="document-upload" title="Upload a document">+</label>
+      <input id="document-upload" class="upload-input" type="file" name="document"
+             accept=".pdf,.doc,.docx,.txt,.md,.markdown"/>
     </form>
 
     <form method="POST" action="/" class="input-wrap">
-      <textarea
-        name="query"
-        placeholder="Ask anything from your documents..."
-        rows="1"
-        autofocus
-      ></textarea>
+      <textarea name="query"
+        placeholder="{% if selected_dataset %}Ask anything from {{ selected_dataset }}…{% else %}Ask anything from your documents…{% endif %}"
+        rows="1" autofocus></textarea>
       <button type="submit" class="send-btn" aria-label="Send">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 2l6 6-6 6M2 8h12" stroke="#0a0a0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -655,21 +997,29 @@
     </form>
   </div>
 
-  <!-- ── Right panel: stats ── -->
+  <!-- ── Right stats panel ── -->
   <aside class="stats-panel">
     <div class="stats-title">Query stats</div>
 
     {% if result and not result.no_info %}
 
+      {% if result.dataset_filter %}
+      <div class="stat-block">
+        <div class="stat-label">Dataset</div>
+        <div class="stat-filter-badge">{{ result.dataset_filter }}</div>
+      </div>
+      <hr class="stats-divider"/>
+      {% endif %}
+
       {% if result.confidence is not none %}
       <div class="stat-block">
         <div class="stat-label">Confidence</div>
         <div class="stat-value"
-          style="color: {% if result.confidence >= 50 %}var(--success){% elif result.confidence >= 30 %}var(--accent){% else %}var(--danger){% endif %}">
+          style="color:{% if result.confidence >= 50 %}var(--success){% elif result.confidence >= 30 %}var(--accent){% else %}var(--danger){% endif %}">
           {{ result.confidence }}%
         </div>
         <div class="conf-bar-track">
-          <div class="conf-bar-fill" style="width: {{ result.confidence }}%"></div>
+          <div class="conf-bar-fill" style="width:{{ result.confidence }}%"></div>
         </div>
       </div>
       {% endif %}
@@ -679,7 +1029,7 @@
       {% if result.latency is not none %}
       <div class="stat-block">
         <div class="stat-label">Latency</div>
-        <div class="stat-value">{{ result.latency }}<span style="font-size:18px; color:var(--muted);">s</span></div>
+        <div class="stat-value">{{ result.latency }}<span style="font-size:18px;color:var(--muted);">s</span></div>
       </div>
       {% endif %}
 
@@ -688,9 +1038,9 @@
       {% if result.total_tokens is not none %}
       <div class="stat-block">
         <div class="stat-label">Tokens</div>
-        <div class="token-row">Prompt <span>{{ result.prompt_tokens }}</span></div>
+        <div class="token-row">Prompt   <span>{{ result.prompt_tokens }}</span></div>
         <div class="token-row">Response <span>{{ result.response_tokens }}</span></div>
-        <div class="token-row">Total <span>{{ result.total_tokens }}</span></div>
+        <div class="token-row">Total    <span>{{ result.total_tokens }}</span></div>
       </div>
       {% endif %}
 
@@ -698,9 +1048,9 @@
       <hr class="stats-divider"/>
       <div class="stat-block">
         <div class="stat-label">Retrieval</div>
-        <div class="token-row">Mode <span>{{ result.retrieval_mode }}</span></div>
+        <div class="token-row">Mode   <span>{{ result.retrieval_mode }}</span></div>
         <div class="token-row">Chunks <span>{{ result.retrieved_chunks }}</span></div>
-        <div class="token-row">Context <span>{{ result.context_tokens }}</span></div>
+        <div class="token-row">Context<span>{{ result.context_tokens }}</span></div>
       </div>
       {% endif %}
 
@@ -715,10 +1065,17 @@
       {% endif %}
 
     {% elif result and result.no_info %}
+      {% if result.dataset_filter %}
+      <div class="stat-block">
+        <div class="stat-label">Dataset</div>
+        <div class="stat-filter-badge">{{ result.dataset_filter }}</div>
+      </div>
+      <hr class="stats-divider"/>
+      {% endif %}
       {% if result.latency is not none %}
       <div class="stat-block">
         <div class="stat-label">Latency</div>
-        <div class="stat-value">{{ result.latency }}<span style="font-size:18px; color:var(--muted);">s</span></div>
+        <div class="stat-value">{{ result.latency }}<span style="font-size:18px;color:var(--muted);">s</span></div>
       </div>
       {% endif %}
       <div class="no-stats">No match found</div>
@@ -727,53 +1084,24 @@
     {% endif %}
 
   </aside>
-
 </div>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     Alian Software Chatbot Widget
-     Reads from FastAPI on :8000 — purely read-only (no DB writes).
-     chatbot.css and chatbot.js live in the widget/ folder served by FastAPI.
-     ═══════════════════════════════════════════════════════════════════ -->
-<script>
-  window.AlianChatConfig = {
-    apiBase:        'http://localhost:8000',
-    siteName:       'Alian Software',
-    assistantName:  'Alian Assistant',
-    placeholder:    'Ask anything about Alian Software…',
-    welcomeTitle:   "Hi, I'm the Alian Assistant",
-    welcomeMessage: 'Ask me about our services, technologies, pricing, or anything on the Alian Software website.',
-    hints: [
-      'What services do you offer?',
-      'How can I get started?',
-      'What technologies do you use?',
-      'Tell me about your team',
-    ],
-  };
-</script>
-<script src="http://localhost:8000/widget/chatbot.js"></script>
-<!-- ══════════════════════════════════════════════════════════════════ -->
 
 <script>
   const chatMessages = document.querySelector(".chat-messages");
-  if (chatMessages) {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+  if (chatMessages) chatMessages.scrollTop = chatMessages.scrollHeight;
 
-  const queryInput = document.querySelector('.input-wrap textarea[name="query"]');
-  const queryForm = document.querySelector(".input-wrap");
-  const sendButton = document.querySelector(".send-btn");
-  const uploadForm = document.querySelector(".upload-form");
+  const queryInput  = document.querySelector('.input-wrap textarea[name="query"]');
+  const queryForm   = document.querySelector(".input-wrap");
+  const sendButton  = document.querySelector(".send-btn");
+  const uploadForm  = document.querySelector(".upload-form");
   const uploadInput = document.querySelector(".upload-input");
   const uploadButton = document.querySelector(".upload-btn");
   let isSubmittingQuery = false;
 
   function appendRetrievalAnimation(queryText) {
     if (!chatMessages) return;
-
     const emptyState = chatMessages.querySelector(".empty-state");
     if (emptyState) emptyState.remove();
-
     const turn = document.createElement("div");
     turn.className = "turn pending-turn";
     turn.innerHTML = `
@@ -791,50 +1119,63 @@
             </span>
           </div>
         </div>
-      </div>
-    `;
+      </div>`;
     turn.querySelector(".msg.user .msg-bubble").textContent = queryText;
     chatMessages.appendChild(turn);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
   if (queryInput && queryForm) {
-    queryForm.addEventListener("submit", (event) => {
-      if (isSubmittingQuery) {
-        event.preventDefault();
-        return;
-      }
-
+    queryForm.addEventListener("submit", (e) => {
+      if (isSubmittingQuery) { e.preventDefault(); return; }
       const queryText = queryInput.value.trim();
-      if (!queryText) {
-        event.preventDefault();
-        return;
-      }
-
+      if (!queryText) { e.preventDefault(); return; }
       isSubmittingQuery = true;
       appendRetrievalAnimation(queryText);
       queryInput.readOnly = true;
       if (sendButton) sendButton.disabled = true;
     });
-
-    queryInput.addEventListener("keydown", (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        event.preventDefault();
-        queryForm.requestSubmit();
-      }
+    queryInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); queryForm.requestSubmit(); }
     });
   }
 
   if (uploadForm && uploadInput) {
     uploadInput.addEventListener("change", () => {
       if (!uploadInput.files || uploadInput.files.length === 0) return;
-      if (uploadButton) {
-        uploadButton.classList.add("is-uploading");
-        uploadButton.textContent = "...";
-      }
+      if (uploadButton) { uploadButton.classList.add("is-uploading"); uploadButton.textContent = "..."; }
       uploadForm.submit();
     });
   }
+</script>
+<script src="http://localhost:8000/widget/chatbot.js?v=2"></script>
+<script>
+  (function(){
+    const brandTitle = document.querySelector('.brand-title');
+    const brandLogo = document.querySelector('.brand-logo');
+    const headerTitle = document.querySelector('.chat-header h1');
+    if (!brandTitle || !brandLogo || !headerTitle) return;
+
+    let shimmerTimeout = null;
+    function triggerShimmer() {
+      brandTitle.classList.add('shimmer');
+      brandTitle.classList.add('pulse');
+      headerTitle.classList.add('shimmer');
+      brandLogo.classList.add('pulse');
+      brandLogo.classList.add('animate');
+      clearTimeout(shimmerTimeout);
+      shimmerTimeout = setTimeout(() => {
+        brandTitle.classList.remove('shimmer');
+        brandTitle.classList.remove('pulse');
+        headerTitle.classList.remove('shimmer');
+        brandLogo.classList.remove('pulse');
+        brandLogo.classList.remove('animate');
+      }, 1000);
+    }
+
+    brandTitle.addEventListener('mouseenter', () => triggerShimmer());
+    brandTitle.addEventListener('click', () => triggerShimmer());
+  })();
 </script>
 </body>
 </html>

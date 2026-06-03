@@ -1,0 +1,18 @@
+{
+  "session_id": "edfd8200-d765-4b57-a5e2-a26c7ff07775",
+  "created_at": "2026-06-03T05:43:36Z",
+  "title": "What technologies do you use?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What technologies do you use?",
+      "timestamp": "2026-06-03T05:43:36Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Alian AI specializes in AI agents, RAG (Retrieval-Augmented Generation), LLM applications, AI automation, custom chatbots, predictive ML, and computer vision. We focus on delivering production-ready solutions in these areas.",
+      "timestamp": "2026-06-03T05:43:38Z"
+    }
+  ],
+  "updated_at": "2026-06-03T05:43:38Z"
+}

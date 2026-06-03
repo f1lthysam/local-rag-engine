@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>RAG Admin — Dashboard</title>
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #050507;
+      --surface:      #111214;
+      --surface2:     #1b1a20;
+      --border:       rgba(255,255,255,0.08);
+      --border2:      rgba(255,255,255,0.12);
+      --text:         #f4ece0;
+      --muted:        #b8aa9a;
+      --accent:       #ff8c26;
+      --accent-soft:  rgba(255,140,38,0.14);
+      --accent-glow:  rgba(255,140,38,0.3);
+      --danger:       #e05555;
+      --danger-soft:  rgba(224,85,85,0.12);
+      --success:      #3ecf8e;
+      --success-soft: rgba(62,207,142,0.12);
+      --mono:         'Inter', system-ui, sans-serif;
+      --sans:         'Inter', system-ui, sans-serif;
+      --radius:       14px;
+      --radius-sm:    8px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(circle at 8% 10%, rgba(255,140,38,0.1), transparent 20%),
+        radial-gradient(circle at 92% 8%,  rgba(255,140,38,0.06), transparent 18%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── Layout ── */
+    .shell {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      min-height: 100vh;
+    }
+
+    /* ── Sidebar nav ── */
+    .nav {
+      background: rgba(10,10,12,0.96);
+      border-right: 1px solid var(--border);
+      padding: 28px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px 22px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 10px;
+    }
+    .nav-logo-icon {
+      width: 32px; height: 32px;
+      background: linear-gradient(135deg, #ff8c26, #ffb86b);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+    .nav-logo-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
+      letter-spacing: 0.02em;
+    }
+    .nav-logo-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 14px 12px 6px;
+    }
+
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 450;
+      transition: background 0.15s, color 0.15s;
+      border: 1px solid transparent;
+    }
+    .nav-link:hover {
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+    .nav-link.active {
+      background: var(--accent-soft);
+      border-color: rgba(255,140,38,0.25);
+      color: var(--accent);
+    }
+    .nav-link svg { width: 16px; height: 16px; flex-shrink: 0; opacity: 0.7; }
+    .nav-link.active svg { opacity: 1; }
+
+    /* ── Main content ── */
+    .main {
+      padding: 36px 40px;
+      overflow-y: auto;
+      min-height: 100vh;
+    }
+
+    .page-header {
+      margin-bottom: 32px;
+    }
+    .page-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+    }
+    .page-sub {
+      font-size: 14px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    /* ── Stat cards row ── */
+    .stat-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+    .stat-card-label {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .stat-card-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    /* ── Section header + action ── */
+    .section-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    /* ── Buttons ── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-family: var(--sans);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn:active { transform: scale(0.97); }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #ff8c26, #ffb86b);
+      color: #0a0a0a;
+      box-shadow: 0 4px 16px rgba(255,140,38,0.25);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border2);
+    }
+    .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+    .btn-danger {
+      background: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid rgba(224,85,85,0.25);
+    }
+    .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+
+    /* ── Tenant table ── */
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      padding: 12px 18px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.12s;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: rgba(255,255,255,0.02); }
+    tbody td {
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text);
+      vertical-align: middle;
+    }
+
+    .tenant-name {
+      font-weight: 600;
+      color: var(--text);
+    }
+    .tenant-website {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .api-key-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .api-key-text {
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: var(--muted);
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border);
+      border-radius: 5px;
+      padding: 3px 8px;
+      max-width: 180px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+    .api-key-text:hover { color: var(--text); border-color: var(--border2); }
+    .api-key-text.copied { color: var(--success); border-color: rgba(62,207,142,0.35); }
+
+    .actions { display: flex; gap: 8px; align-items: center; }
+
+    /* ── Empty state ── */
+    .empty-tenants {
+      text-align: center;
+      padding: 56px 20px;
+      color: var(--muted);
+    }
+    .empty-tenants .icon { font-size: 36px; margin-bottom: 12px; opacity: 0.5; }
+    .empty-tenants p { font-size: 14px; margin-bottom: 20px; }
+
+    /* ── Modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 28px;
+      width: 100%;
+      max-width: 460px;
+      box-shadow: 0 32px 64px rgba(0,0,0,0.5);
+      animation: modalIn 0.2s ease;
+    }
+    @keyframes modalIn {
+      from { opacity: 0; transform: translateY(12px) scale(0.98); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .modal-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .modal-sub {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .form-group { margin-bottom: 18px; }
+    .form-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 7px;
+    }
+    .form-input {
+      width: 100%;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 14px;
+      padding: 10px 14px;
+      outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input::placeholder { color: var(--muted); }
+    .form-input:focus {
+      border-color: rgba(255,140,38,0.5);
+      box-shadow: 0 0 0 3px rgba(255,140,38,0.1);
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      margin-top: 24px;
+    }
+
+    /* ── Embed modal ── */
+    .embed-code {
+      background: rgba(0,0,0,0.35);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 14px;
+      font-family: 'Courier New', monospace;
+      font-size: 12px;
+      color: #a8d8f0;
+      line-height: 1.7;
+      white-space: pre;
+      overflow-x: auto;
+      margin-bottom: 12px;
+    }
+
+    /* ── Toast ── */
+    .toast {
+      position: fixed;
+      bottom: 28px;
+      right: 28px;
+      background: var(--surface2);
+      border: 1px solid var(--border2);
+      border-radius: var(--radius-sm);
+      padding: 12px 18px;
+      font-size: 13px;
+      color: var(--text);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+      z-index: 200;
+      transform: translateY(8px);
+      opacity: 0;
+      transition: opacity 0.2s, transform 0.2s;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .toast.success { border-color: rgba(62,207,142,0.4); color: var(--success); }
+    .toast.error   { border-color: rgba(224,85,85,0.4);  color: var(--danger);  }
+
+    /* ── Badge ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-green { background: var(--success-soft); color: var(--success); }
+    .badge-orange { background: var(--accent-soft); color: var(--accent); }
+  </style>
+</head>
+<body>
+<div class="shell">
+
+  <!-- ── Sidebar nav ── -->
+  <nav class="nav">
+    <div class="nav-logo">
+      <div class="nav-logo-icon">⬡</div>
+      <div>
+        <div class="nav-logo-text">RAG Admin</div>
+        <div class="nav-logo-sub">Control Panel</div>
+      </div>
+    </div>
+
+    <div class="nav-label">Main</div>
+    <a href="/" class="nav-link active">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3zm0 6a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V9zm8 0a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1V9z"/></svg>
+      Dashboard
+    </a>
+    <a href="/studio" class="nav-link">
+      <svg viewBox="0 0 16 16" fill="currentColor"><path d="M2 2a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2zm3 1v1h6V3H5zm0 3v1h6V6H5zm0 3v1h4V9H5z"/></svg>
+      RAG Studio
+    </a>
+
+    <div class="nav-label" style="margin-top:8px;">Info</div>
+    <div class="nav-link" style="cursor:default;">
+      <svg viewBox="0 0 16 16" fill="currentColor"><circle cx="8" cy="8" r="6" stroke="currentColor" stroke-width="1.5" fill="none"/><path d="M8 7v4M8 5.5v.5"/></svg>
+      <span style="font-size:12px;color:var(--muted);">v1.0 · Local</span>
+    </div>
+  </nav>
+
+  <!-- ── Main content ── -->
+  <main class="main">
+    <div class="page-header">
+      <div class="page-title">Dashboard</div>
+      <div class="page-sub">Manage tenants, API keys, and embed codes</div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="stat-cards">
+      <div class="stat-card">
+        <div class="stat-card-label">Total Tenants</div>
+        <div class="stat-card-value">{{ tenants|length }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Datasets</div>
+        <div class="stat-card-value" id="ds-count">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Chat Sessions</div>
+        <div class="stat-card-value" id="sess-count">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">RAG Studio</div>
+        <div class="stat-card-value" style="font-size:18px;padding-top:6px;">
+          <a href="/studio" style="color:var(--accent);text-decoration:none;font-size:14px;font-weight:600;">Open →</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tenants section -->
+    <div class="section-head">
+      <div class="section-title">Tenants</div>
+      <button class="btn btn-primary" onclick="openCreateModal()">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="currentColor"><path d="M7 1v12M1 7h12"/></svg>
+        New Tenant
+      </button>
+    </div>
+
+    <div class="table-wrap">
+      {% if tenants %}
+      <table>
+        <thead>
+          <tr>
+            <th>Tenant</th>
+            <th>API Key</th>
+            <th>Created</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tenant-tbody">
+          {% for t in tenants %}
+          <tr data-id="{{ t.id }}">
+            <td>
+              <div class="tenant-name">{{ t.name }}</div>
+              {% if t.website %}<div class="tenant-website">{{ t.website }}</div>{% endif %}
+            </td>
+            <td>
+              <div class="api-key-wrap">
+                <span class="api-key-text" onclick="copyKey(this, '{{ t.api_key }}')" title="Click to copy">{{ t.api_key[:18] }}…</span>
+                <button class="btn btn-ghost btn-sm" onclick="regenKey('{{ t.id }}', this)">↻</button>
+              </div>
+            </td>
+            <td style="font-size:12px;color:var(--muted);">{{ t.created_at[:10] }}</td>
+            <td>
+              <div class="actions">
+                <button class="btn btn-ghost btn-sm" onclick="showEmbed('{{ t.name }}', '{{ t.api_key }}')">Embed</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTenant('{{ t.id }}', '{{ t.name }}', this)">Delete</button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-tenants" id="empty-state">
+        <div class="icon">⬡</div>
+        <p>No tenants yet. Create your first one to get started.</p>
+        <button class="btn btn-primary" onclick="openCreateModal()">Create Tenant</button>
+      </div>
+      {% endif %}
+    </div>
+
+  </main>
+</div>
+
+<!-- ── Create tenant modal ── -->
+<div class="modal-backdrop" id="create-modal">
+  <div class="modal">
+    <div class="modal-title">New Tenant</div>
+    <div class="modal-sub">Each tenant gets a unique API key for their chatbot widget.</div>
+    <div class="form-group">
+      <label class="form-label">Client / Tenant Name *</label>
+      <input class="form-input" id="input-name" type="text" placeholder="e.g. Alian Software" autocomplete="off"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Website URL</label>
+      <input class="form-input" id="input-website" type="url" placeholder="https://aliansoftware.com"/>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Notes</label>
+      <input class="form-input" id="input-notes" type="text" placeholder="Optional notes"/>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeCreateModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="createTenant()">Create Tenant</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Embed code modal ── -->
+<div class="modal-backdrop" id="embed-modal">
+  <div class="modal" style="max-width:560px;">
+    <div class="modal-title">Embed Code</div>
+    <div class="modal-sub" id="embed-sub">Add these 2 lines to any website before &lt;/body&gt;</div>
+    <div class="embed-code" id="embed-code-block"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="closeEmbedModal()">Close</button>
+      <button class="btn btn-primary" onclick="copyEmbedCode()">Copy Code</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast"></div>
+
+<script>
+  // ── Stats from API ──────────────────────────────────────────────────────────
+  fetch('/api/tenants')
+    .then(r => r.json())
+    .then(tenants => {
+      // dataset count via history endpoint
+    })
+    .catch(() => {});
+
+  // quick fetch for session count
+  fetch('/history')
+    .then(r => r.json())
+    .then(d => {
+      document.getElementById('sess-count').textContent = d.count ?? '—';
+    })
+    .catch(() => {
+      document.getElementById('sess-count').textContent = '0';
+    });
+
+  // dataset count — list data/ files via a simple endpoint we can fake
+  document.getElementById('ds-count').textContent = '{{ stats.values()|list|length if stats else 0 }}';
+
+  // ── Toast ───────────────────────────────────────────────────────────────────
+  function showToast(msg, type = '') {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.className   = 'toast ' + type;
+    void el.offsetWidth;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), 2800);
+  }
+
+  // ── Create modal ────────────────────────────────────────────────────────────
+  function openCreateModal() {
+    document.getElementById('input-name').value    = '';
+    document.getElementById('input-website').value = '';
+    document.getElementById('input-notes').value   = '';
+    document.getElementById('create-modal').classList.add('open');
+    setTimeout(() => document.getElementById('input-name').focus(), 80);
+  }
+  function closeCreateModal() {
+    document.getElementById('create-modal').classList.remove('open');
+  }
+  document.getElementById('create-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeCreateModal();
+  });
+
+  async function createTenant() {
+    const name    = document.getElementById('input-name').value.trim();
+    const website = document.getElementById('input-website').value.trim();
+    const notes   = document.getElementById('input-notes').value.trim();
+    if (!name) { showToast('Name is required', 'error'); return; }
+
+    const res  = await fetch('/api/tenants', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ name, website, notes }),
+    });
+    const data = await res.json();
+    if (!res.ok) { showToast(data.error || 'Error creating tenant', 'error'); return; }
+
+    closeCreateModal();
+    showToast(`Tenant "${data.name}" created`, 'success');
+    setTimeout(() => location.reload(), 800);
+  }
+
+  // Enter key in modal
+  ['input-name','input-website','input-notes'].forEach(id => {
+    document.getElementById(id).addEventListener('keydown', e => {
+      if (e.key === 'Enter') createTenant();
+    });
+  });
+
+  // ── Delete tenant ───────────────────────────────────────────────────────────
+  async function deleteTenant(id, name, btn) {
+    if (!confirm(`Delete tenant "${name}"? This cannot be undone.`)) return;
+    btn.disabled = true;
+    const res = await fetch(`/api/tenants/${id}`, { method: 'DELETE' });
+    if (res.ok) {
+      const row = document.querySelector(`tr[data-id="${id}"]`);
+      if (row) row.remove();
+      showToast(`Deleted "${name}"`, 'success');
+      // Show empty state if no rows left
+      const tbody = document.getElementById('tenant-tbody');
+      if (tbody && tbody.querySelectorAll('tr').length === 0) {
+        location.reload();
+      }
+    } else {
+      showToast('Delete failed', 'error');
+      btn.disabled = false;
+    }
+  }
+
+  // ── Regenerate key ──────────────────────────────────────────────────────────
+  async function regenKey(id, btn) {
+    if (!confirm('Regenerate API key? The old key will stop working immediately.')) return;
+    btn.disabled = true;
+    const res  = await fetch(`/api/tenants/${id}/regenerate-key`, { method: 'POST' });
+    const data = await res.json();
+    if (res.ok) {
+      const row     = document.querySelector(`tr[data-id="${id}"]`);
+      const keySpan = row?.querySelector('.api-key-text');
+      if (keySpan) {
+        keySpan.textContent = data.api_key.slice(0, 18) + '…';
+        keySpan.onclick = () => copyKey(keySpan, data.api_key);
+      }
+      showToast('API key regenerated', 'success');
+    } else {
+      showToast('Failed to regenerate key', 'error');
+    }
+    btn.disabled = false;
+  }
+
+  // ── Copy API key ────────────────────────────────────────────────────────────
+  function copyKey(el, key) {
+    navigator.clipboard.writeText(key).then(() => {
+      el.classList.add('copied');
+      el.textContent = 'Copied!';
+      setTimeout(() => {
+        el.classList.remove('copied');
+        el.textContent = key.slice(0, 18) + '…';
+      }, 1500);
+    });
+  }
+
+  // ── Embed modal ─────────────────────────────────────────────────────────────
+  let _currentEmbedCode = '';
+
+  function showEmbed(name, apiKey) {
+    const base = window.location.origin.replace(':5000', ':8000');
+    const code =
+`<script>
+  window.AlianChatConfig = {
+    apiBase:       '${base}',
+    apiKey:        '${apiKey}',
+    siteName:      '${name}',
+    assistantName: '${name} Assistant',
+  };
+<\/script>
+<script src="${base}/widget/chatbot.js"><\/script>`;
+
+    _currentEmbedCode = code;
+    document.getElementById('embed-sub').textContent =
+      `Embed code for "${name}" — paste before </body> on any page`;
+    document.getElementById('embed-code-block').textContent = code;
+    document.getElementById('embed-modal').classList.add('open');
+  }
+
+  function closeEmbedModal() {
+    document.getElementById('embed-modal').classList.remove('open');
+  }
+  document.getElementById('embed-modal').addEventListener('click', function(e) {
+    if (e.target === this) closeEmbedModal();
+  });
+
+  function copyEmbedCode() {
+    navigator.clipboard.writeText(_currentEmbedCode).then(() => {
+      showToast('Embed code copied!', 'success');
+    });
+  }
+
+  // Escape closes modals
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') { closeCreateModal(); closeEmbedModal(); }
+  });
+</script>
+</body>
+</html>

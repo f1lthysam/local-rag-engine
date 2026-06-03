@@ -1,16 +1,19 @@
 """
-app.py — Flask frontend server for the RAG chatbot.
+app.py — Flask server with Admin Dashboard + RAG Studio
 
-Run:
-    pip install flask
-    python app.py
-
-Then open: http://localhost:5000
+Routes:
+    /               → Dashboard (tenant management)
+    /studio         → RAG Studio (existing test UI)
+    /ingest-url     → Scrape & index URL
+    /upload-file    → Upload & index file
+    /clear-chat     → Clear chat history
+    /select-dataset → Switch dataset filter
+    /api/tenants    → CRUD for tenants (JSON API)
 """
 
 import warnings
 warnings.filterwarnings("ignore")
-import os, logging
+import os, json, logging, secrets
 from uuid import uuid4
 from urllib.parse import urlparse
 from pathlib import Path
@@ -24,16 +27,50 @@ from populate_database import add_to_chroma, load_documents, split_documents
 import query_data
 from scrape_web import scrape_and_save, scrape_full_website
 
-app = Flask(__name__, template_folder=".")
+app = Flask(__name__, template_folder="templates")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "local-rag-dev-secret")
 
-MODEL_NAME = "gemini-3.1-flash-lite"
+MODEL_NAME  = "gemini-3.1-flash-lite"
 MAX_CHAT_TURNS = 20
-CHAT_SESSIONS = {}
-DATA_PATH = "data"
+CHAT_SESSIONS  = {}
+DATA_PATH      = "data"
+TENANTS_FILE   = Path("tenants.json")
+HISTORY_DIR    = Path("chat_histories")
 ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".md", ".markdown", ".txt", ".docx", ".doc"}
 
+
+# ── Tenant helpers ─────────────────────────────────────────────────────────────
+
+def load_tenants() -> list:
+    if not TENANTS_FILE.exists():
+        return []
+    try:
+        return json.loads(TENANTS_FILE.read_text("utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
+def save_tenants(tenants: list) -> None:
+    TENANTS_FILE.write_text(json.dumps(tenants, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
+def find_tenant(tenant_id: str) -> dict | None:
+    return next((t for t in load_tenants() if t["id"] == tenant_id), None)
+
+
+def tenant_stats(tenant: dict) -> dict:
+    """Count chat sessions and data files for a tenant."""
+    HISTORY_DIR.mkdir(exist_ok=True)
+    sessions = list(HISTORY_DIR.glob(f"chat_history_*.json"))
+    datasets = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
+    return {
+        "session_count": len(sessions),
+        "dataset_count": len(datasets),
+    }
+
+
+# ── Session helpers ────────────────────────────────────────────────────────────
 
 def get_session_id():
     if "chat_session_id" not in session:
@@ -52,7 +89,6 @@ def append_chat_turn(query, result):
 
 
 def get_available_datasets():
-    """Return list of .md filenames available in the data folder."""
     data_dir = Path(DATA_PATH)
     if not data_dir.exists():
         return []
@@ -60,12 +96,76 @@ def get_available_datasets():
 
 
 def get_selected_dataset():
-    """Get currently selected dataset from Flask session. None = all datasets."""
     return session.get("selected_dataset", None)
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
+# ══════════════════════════════════════════════════════════════════════════════
+# DASHBOARD ROUTES
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.route("/")
+def dashboard():
+    tenants = load_tenants()
+    stats   = {t["id"]: tenant_stats(t) for t in tenants}
+    return render_template("dashboard.html", tenants=tenants, stats=stats)
+
+
+# ── Tenant API ─────────────────────────────────────────────────────────────────
+
+@app.route("/api/tenants", methods=["GET"])
+def api_list_tenants():
+    return jsonify(load_tenants())
+
+
+@app.route("/api/tenants", methods=["POST"])
+def api_create_tenant():
+    data    = request.get_json(force=True) or {}
+    name    = (data.get("name") or "").strip()
+    website = (data.get("website") or "").strip()
+    if not name:
+        return jsonify({"error": "name is required"}), 400
+
+    tenant = {
+        "id":         uuid4().hex[:12],
+        "name":       name,
+        "website":    website,
+        "api_key":    "ak_" + secrets.token_urlsafe(24),
+        "created_at": __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "notes":      data.get("notes", ""),
+    }
+    tenants = load_tenants()
+    tenants.append(tenant)
+    save_tenants(tenants)
+    return jsonify(tenant), 201
+
+
+@app.route("/api/tenants/<tenant_id>", methods=["DELETE"])
+def api_delete_tenant(tenant_id):
+    tenants = load_tenants()
+    updated = [t for t in tenants if t["id"] != tenant_id]
+    if len(updated) == len(tenants):
+        return jsonify({"error": "not found"}), 404
+    save_tenants(updated)
+    return jsonify({"deleted": True})
+
+
+@app.route("/api/tenants/<tenant_id>/regenerate-key", methods=["POST"])
+def api_regenerate_key(tenant_id):
+    tenants = load_tenants()
+    for t in tenants:
+        if t["id"] == tenant_id:
+            t["api_key"] = "ak_" + secrets.token_urlsafe(24)
+            save_tenants(tenants)
+            return jsonify({"api_key": t["api_key"]})
+    return jsonify({"error": "not found"}), 404
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# STUDIO ROUTES  (existing RAG test UI, moved to /studio)
+# ══════════════════════════════════════════════════════════════════════════════
+
+@app.route("/studio", methods=["GET", "POST"])
+def studio():
     result       = None
     query        = None
     ingest       = None
@@ -74,9 +174,9 @@ def index():
         result = chat_history[-1].get("result")
 
     if request.method == "POST":
-        query = request.form.get("query", "").strip()
+        query    = request.form.get("query", "").strip()
+        selected = get_selected_dataset()
         if query:
-            selected = get_selected_dataset()
             result = query_data.query_rag_web(
                 query,
                 chat_history=chat_history,
@@ -85,7 +185,7 @@ def index():
             append_chat_turn(query, result)
 
     return render_template(
-        "index.html",
+        "studio.html",
         result=result,
         query=query,
         chat_history=chat_history,
@@ -99,22 +199,20 @@ def index():
 
 @app.route("/select-dataset", methods=["POST"])
 def select_dataset():
-    """Store user's dataset choice in their session."""
-    chosen = request.form.get("dataset", "").strip()
+    chosen    = request.form.get("dataset", "").strip()
     available = get_available_datasets()
     if chosen == "__all__" or chosen not in available:
         session.pop("selected_dataset", None)
     else:
         session["selected_dataset"] = chosen
-    # Clear chat when switching datasets so old answers don't confuse context
     CHAT_SESSIONS[get_session_id()] = []
-    return redirect(url_for("index"))
+    return redirect(url_for("studio"))
 
 
 @app.route("/clear-chat", methods=["POST"])
 def clear_chat():
     CHAT_SESSIONS[get_session_id()] = []
-    return redirect(url_for("index"))
+    return redirect(url_for("studio"))
 
 
 @app.route("/images/<path:filename>")
@@ -126,16 +224,14 @@ def images(filename):
 def ingest_url():
     url    = request.form.get("url", "").strip()
     ingest = None
-
     try:
         validate_url(url)
-        filename     = filename_from_url(url)
-        saved_paths  = scrape_full_website(url, filename)
-        documents    = load_documents()
-        chunks       = split_documents(documents)
+        filename    = filename_from_url(url)
+        saved_paths = scrape_full_website(url, filename)
+        documents   = load_documents()
+        chunks      = split_documents(documents)
         add_to_chroma(chunks)
         query_data._DB = None
-
         ingest = {
             "ok":      True,
             "message": f"Scraped {len(saved_paths)} page(s) from {url} and indexed them.",
@@ -145,12 +241,10 @@ def ingest_url():
         ingest = {"ok": False, "message": f"Could not scrape/index that URL: {exc}", "path": None}
 
     return render_template(
-        "index.html",
-        result=None,
-        query=None,
+        "studio.html",
+        result=None, query=None,
         chat_history=get_chat_history(),
-        ingest=ingest,
-        url=url,
+        ingest=ingest, url=url,
         model=MODEL_NAME,
         datasets=get_available_datasets(),
         selected_dataset=get_selected_dataset(),
@@ -161,24 +255,19 @@ def ingest_url():
 def upload_file():
     uploaded_file = request.files.get("document")
     ingest        = None
-
     try:
         if not uploaded_file or not uploaded_file.filename:
             raise ValueError("choose a PDF, Word, text, or Markdown file")
-
         original_name = secure_filename(uploaded_file.filename)
         extension     = os.path.splitext(original_name)[1].lower()
         if extension not in ALLOWED_UPLOAD_EXTENSIONS:
             raise ValueError("only PDF, Word, text, and Markdown files are supported")
-
         os.makedirs(DATA_PATH, exist_ok=True)
         saved_path = save_upload_as_markdown(uploaded_file, original_name)
-
-        documents = load_documents()
-        chunks    = split_documents(documents)
+        documents  = load_documents()
+        chunks     = split_documents(documents)
         add_to_chroma(chunks)
         query_data._DB = None
-
         ingest = {
             "ok":      True,
             "message": f"Uploaded, converted to Markdown, and indexed {original_name}.",
@@ -188,35 +277,30 @@ def upload_file():
         ingest = {"ok": False, "message": f"Could not upload/index that file: {exc}", "path": None}
 
     return render_template(
-        "index.html",
-        result=None,
-        query=None,
+        "studio.html",
+        result=None, query=None,
         chat_history=get_chat_history(),
-        ingest=ingest,
-        url="",
+        ingest=ingest, url="",
         model=MODEL_NAME,
         datasets=get_available_datasets(),
         selected_dataset=get_selected_dataset(),
     )
 
 
-# ── History dir (widget) ──────────────────────────────────────────────────────
-HISTORY_DIR = Path("chat_histories")
-
-@app.route('/history/clear-all', methods=['POST'])
+@app.route("/history/clear-all", methods=["POST"])
 def clear_all_histories():
     HISTORY_DIR.mkdir(exist_ok=True)
     deleted = 0
-    for f in HISTORY_DIR.glob('chat_history_*.json'):
+    for f in HISTORY_DIR.glob("chat_history_*.json"):
         try:
             f.unlink()
             deleted += 1
         except OSError:
             continue
-    return {"deleted": True, "deleted_count": deleted}
+    return jsonify({"deleted": True, "deleted_count": deleted})
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
+# ── File helpers ───────────────────────────────────────────────────────────────
 
 def save_upload_as_markdown(uploaded_file, original_name: str) -> str:
     extension     = Path(original_name).suffix.lower()
@@ -234,9 +318,8 @@ def save_upload_as_markdown(uploaded_file, original_name: str) -> str:
     else:
         raise ValueError("unsupported file type")
 
-    with open(markdown_path, "w", encoding="utf-8") as file:
-        file.write(content.strip() + "\n")
-
+    with open(markdown_path, "w", encoding="utf-8") as f:
+        f.write(content.strip() + "\n")
     return markdown_path
 
 
@@ -252,9 +335,9 @@ def unique_markdown_filename(base_name: str) -> str:
 
 def read_uploaded_text(uploaded_file) -> str:
     raw = uploaded_file.read()
-    for encoding in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
+    for enc in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
         try:
-            return raw.decode(encoding)
+            return raw.decode(enc)
         except UnicodeDecodeError:
             continue
     return raw.decode("utf-8", errors="replace")
@@ -270,10 +353,10 @@ def pdf_to_markdown(uploaded_file, original_name: str) -> str:
     reader   = PdfReader(uploaded_file.stream)
     title    = Path(original_name).stem.replace("_", " ").replace("-", " ").strip()
     sections = [f"# {title or 'Uploaded PDF'}"]
-    for page_number, page in enumerate(reader.pages, start=1):
+    for i, page in enumerate(reader.pages, 1):
         text = (page.extract_text() or "").strip()
         if text:
-            sections.append(f"## Page {page_number}\n\n{text}")
+            sections.append(f"## Page {i}\n\n{text}")
     if len(sections) == 1:
         raise ValueError("could not extract readable text from that PDF")
     return "\n\n".join(sections)
@@ -286,22 +369,19 @@ def docx_to_markdown(uploaded_file, original_name: str) -> str:
         from docx import Document
     except ImportError as exc:
         raise ValueError("Word uploads need python-docx installed") from exc
-
     uploaded_file.stream.seek(0)
     doc   = Document(uploaded_file.stream)
     title = Path(original_name).stem.replace("_", " ").replace("-", " ").strip()
     lines = [f"# {title or 'Uploaded Word document'}"]
-
-    for paragraph in doc.paragraphs:
-        text = paragraph.text.strip()
-        if text:
-            lines.append(text)
+    for p in doc.paragraphs:
+        t = p.text.strip()
+        if t:
+            lines.append(t)
     for table in doc.tables:
         for row in table.rows:
-            cells = [cell.text.strip().replace("\n", " ") for cell in row.cells]
+            cells = [c.text.strip().replace("\n", " ") for c in row.cells]
             if any(cells):
                 lines.append("| " + " | ".join(cells) + " |")
-
     if len(lines) == 1:
         raise ValueError("could not extract readable text from that Word document")
     return "\n\n".join(lines)
@@ -319,7 +399,7 @@ def filename_from_url(url: str):
     path   = parsed.path.strip("/").replace("/", "-")
     base   = f"{domain}-{path}" if path else domain
     safe   = "".join(c if c.isalnum() or c in "-_." else "-" for c in base)
-    return f"{safe[:80]}"
+    return safe[:80]
 
 
 if __name__ == "__main__":

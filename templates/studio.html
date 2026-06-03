@@ -101,6 +101,200 @@
       font-weight: 600;
       color: var(--accent);
     }
+    .top-nav-spacer { flex: 1; }
+    .top-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: 6px;
+      padding: 4px 10px;
+      cursor: pointer;
+      font-family: var(--sans);
+      transition: color 0.15s, border-color 0.15s, background 0.15s;
+    }
+    .top-nav-btn:hover {
+      color: var(--text);
+      background: rgba(255,255,255,0.05);
+      border-color: rgba(255,255,255,0.1);
+    }
+
+    /* ── Modals ── */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+      padding: 24px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-panel {
+      width: min(640px, 100%);
+      max-height: min(85vh, 820px);
+      overflow: auto;
+      background: var(--surface);
+      border: 1px solid var(--border2);
+      border-radius: 16px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      padding: 24px;
+    }
+    .modal-panel.wide { width: min(860px, 100%); }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+    .modal-header h2 {
+      font-family: var(--mono);
+      font-size: 14px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .modal-close {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 8px;
+      width: 32px;
+      height: 32px;
+      cursor: pointer;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); border-color: var(--accent); }
+    .field-label {
+      display: block;
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    .field-textarea {
+      width: 100%;
+      min-height: 100px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      padding: 12px 14px;
+      resize: vertical;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .field-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,140,38,0.09); }
+    .modal-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .modal-btn {
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      border-radius: 10px;
+      padding: 10px 16px;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.04);
+      color: var(--text);
+    }
+    .modal-btn:hover { border-color: var(--accent); }
+    .modal-btn.primary {
+      background: linear-gradient(135deg, #ff8c26 0%, #ffb86b 100%);
+      color: #0a0a0a;
+      border: none;
+    }
+    .modal-btn.success {
+      background: rgba(39,174,96,0.18);
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .validation-box {
+      margin-top: 14px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-family: var(--mono);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .validation-box.ok { border: 1px solid var(--success); color: var(--success); background: rgba(39,174,96,0.08); }
+    .validation-box.err { border: 1px solid var(--danger); color: #f0c5c5; background: rgba(192,57,43,0.1); }
+    .validation-box ul { margin: 8px 0 0 18px; }
+    .published-badge {
+      margin-top: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,140,38,0.35);
+      background: rgba(255,140,38,0.08);
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .published-badge strong { color: var(--accent); }
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .analytics-card {
+      padding: 14px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.02);
+    }
+    .analytics-card .label {
+      font-family: var(--mono);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .analytics-card .value {
+      font-family: var(--mono);
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 6px;
+    }
+    .analytics-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: var(--mono);
+      font-size: 12px;
+    }
+    .analytics-table th, .analytics-table td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+    .analytics-table th { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
+    .analytics-section-title {
+      font-family: var(--mono);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 18px 0 10px;
+    }
 
     /* ── Layout (offset for top-nav) ── */
     .layout {
@@ -537,6 +731,9 @@
   </a>
   <span class="top-nav-divider">/</span>
   <span class="top-nav-current">RAG Studio</span>
+  <span class="top-nav-spacer"></span>
+  <button type="button" class="top-nav-btn" id="btn-prompt-settings">Prompt Settings</button>
+  <button type="button" class="top-nav-btn" id="btn-analytics">Analytics</button>
 </nav>
 
 <div class="layout">

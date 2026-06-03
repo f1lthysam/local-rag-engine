@@ -54,6 +54,7 @@
     sessions:  [],
     busy:      false,
     loadedFromHistory: false,
+    hasMessages: false,
   };
 
   /* ── SVG icons ───────────────────────────────────────────────────────────── */
@@ -313,6 +314,7 @@
   }
 
   function closePanel() {
+    persistCurrentSession();
     S.open = false;
     const fab   = document.getElementById('chatbot-fab');
     const panel = document.getElementById('chatbot-panel');
@@ -323,8 +325,23 @@
     endCurrentSession();
   }
 
+  async function persistCurrentSession() {
+    if (!S.sessionId || !S.hasMessages) return;
+    const sid = S.sessionId;
+    try {
+      await apiFetch('/session/end', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ session_id: sid }),
+      });
+    } catch (e) {
+      console.warn('[AlianChat] Session persist failed:', e);
+    }
+  }
+
   /* ── Session management ──────────────────────────────────────────────────── */
   async function startNewChat() {
+    await persistCurrentSession();
     try {
       const res  = await apiFetch('/new-session', { method: 'POST' });
       const data = await res.json();
@@ -333,6 +350,7 @@
       S.sessionId = genId();
     }
     S.loadedFromHistory = false;
+    S.hasMessages = false;
     clearMessages();
     showWelcome();
     setActiveSession(null);
@@ -341,6 +359,7 @@
   function endCurrentSession() {
     S.sessionId = null;
     S.loadedFromHistory = false;
+    S.hasMessages = false;
     clearMessages();
     showWelcome();
     setActiveSession(null);
@@ -370,6 +389,7 @@
       const data = await res.json();
       S.sessionId = sid;
       S.loadedFromHistory = true;
+      S.hasMessages = (data.messages || []).length > 0;
       clearMessages();
       (data.messages || []).forEach((m) => appendMessage(m.role, m.content, false));
       scrollBottom();
@@ -419,6 +439,7 @@
       S.sessionId = data.session_id;
       hideTyping();
       appendMessage('assistant', data.answer, true);
+      S.hasMessages = true;
       await loadHistory();
       setActiveSession(S.sessionId);
     } catch (e) {
@@ -640,6 +661,8 @@
   async function clearHistoryAll() {
     const clearHistoryBtn = document.getElementById('rc-clear-history');
     if (clearHistoryBtn) clearHistoryBtn.disabled = true;
+
+    await persistCurrentSession();
 
     try {
       const res = await apiFetch('/history', { method: 'DELETE' });

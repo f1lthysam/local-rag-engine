@@ -6,6 +6,7 @@ import logging
 logging.disable(logging.CRITICAL)
 
 import argparse
+import json
 from pathlib import Path
 import re
 import time
@@ -47,6 +48,8 @@ You are a helpful, conversational assistant. Use the rules below in order:
 
 Never say you don't know something you actually know. Never ignore a follow-up question.
 Keep answers concise — 1 to 4 sentences unless the question asks for detail.
+
+{custom_instructions}
 
 {dataset_note}
 
@@ -187,11 +190,13 @@ def query_rag(
         return context_text
 
     dataset_note = _dataset_note(dataset_filter)
+    custom_instructions = get_published_prompt_instructions()
     prompt = get_prompt_template().format(
         context=context_text,
         history="No previous conversation.",
         question=query_text,
         dataset_note=dataset_note,
+        custom_instructions=custom_instructions,
     )
     prompt_tokens = count_tokens(prompt)
 
@@ -233,6 +238,7 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
     retrieval_query = build_retrieval_query(query_text, chat_history)
     retrieval_plan  = plan_retrieval(query_text, chat_history=chat_history)
     dataset_note    = _dataset_note(dataset_filter)
+    custom_instructions = get_published_prompt_instructions()
 
     # Direct markdown lookup only when no dataset filter is active
     if not dataset_filter:
@@ -286,6 +292,7 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
         history=history_text,
         question=query_text,
         dataset_note=dataset_note,
+        custom_instructions=custom_instructions,
     )
     prompt_tokens = count_tokens(prompt)
 
@@ -362,6 +369,28 @@ def _dataset_note(dataset_filter: str) -> str:
     )
 
 
+def get_published_prompt_instructions() -> str:
+    settings_path = Path("prompt_settings.json")
+    if not settings_path.exists():
+        return ""
+    try:
+        data = json.loads(settings_path.read_text("utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return ""
+    published = data.get("published") or {}
+    role = str(published.get("role") or "").strip()
+    constraints = str(published.get("constraints") or "").strip()
+    if not role and not constraints:
+        return ""
+
+    parts = ["CUSTOM DEPLOYED PROMPT SETTINGS:"]
+    if role:
+        parts.append(f"- Role: {role}")
+    if constraints:
+        parts.append(f"- Additional constraints: {constraints}")
+    return "\n".join(parts)
+
+
 def _no_info_result(retrieval_query: str, retrieval_plan: dict,
                     latency: float, dataset_filter: str) -> dict:
     msg = (
@@ -397,6 +426,7 @@ def answer_from_lexical_fallback(query_text: str, history_text: str, start_time)
         history=history_text,
         question=query_text,
         dataset_note="",
+        custom_instructions=get_published_prompt_instructions(),
     )
     prompt_tokens = count_tokens(prompt)
 

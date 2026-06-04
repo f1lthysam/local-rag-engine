@@ -17,6 +17,7 @@ from pypdf import PdfReader
 from populate_database import add_to_chroma, load_documents, split_documents
 import query_data
 from scrape_web import scrape_and_save, scrape_full_website
+from usage_analytics import record_query_event, usage_summary
 
 app = Flask(__name__, template_folder="templates")
 app.config["TEMPLATES_AUTO_RELOAD"] = True
@@ -95,6 +96,16 @@ def tenant_stats(tenant: dict) -> dict:
     datasets = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
     return {"session_count": len(sessions), "dataset_count": len(datasets)}
 
+def dashboard_stats() -> dict:
+    datasets = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
+    histories = list(HISTORY_DIR.glob("chat_history_*.json")) if HISTORY_DIR.exists() else []
+    usage = usage_summary()
+    return {
+        "dataset_count": len(datasets),
+        "chat_session_count": len(histories),
+        **usage,
+    }
+
 # ── Session helpers ────────────────────────────────────────────────────────────
 def get_session_id():
     if "chat_session_id" not in session:
@@ -123,11 +134,15 @@ def get_selected_dataset():
 def dashboard():
     tenants = load_tenants()
     stats   = {t["id"]: tenant_stats(t) for t in tenants}
-    return render_template("dashboard.html", tenants=tenants, stats=stats)
+    return render_template("dashboard.html", tenants=tenants, stats=stats, dashboard_stats=dashboard_stats())
 
 @app.route("/api/tenants", methods=["GET"])
 def api_list_tenants():
     return jsonify(load_tenants())
+
+@app.route("/api/usage-summary", methods=["GET"])
+def api_usage_summary():
+    return jsonify(dashboard_stats())
 
 @app.route("/api/tenants", methods=["POST"])
 def api_create_tenant():
@@ -236,6 +251,13 @@ def studio():
         if query:
             result = query_data.query_rag_web(query, chat_history=chat_history, dataset_filter=selected)
             append_chat_turn(query, result)
+            record_query_event(
+                source="studio",
+                session_id=get_session_id(),
+                query=query,
+                result=result,
+                dataset=selected,
+            )
     return render_template("studio.html", result=result, query=query,
         chat_history=chat_history, ingest=ingest, url="", model=MODEL_NAME,
         datasets=get_available_datasets(), selected_dataset=get_selected_dataset())
@@ -391,4 +413,4 @@ def filename_from_url(url: str):
     return safe[:80]
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5000, use_reloader=False)

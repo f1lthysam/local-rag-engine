@@ -484,17 +484,19 @@
       </div>
       <div class="stat-card">
         <div class="stat-card-label">Datasets</div>
-        <div class="stat-card-value" id="ds-count">—</div>
+        <div class="stat-card-value" id="ds-count">{{ dashboard_stats.dataset_count }}</div>
       </div>
       <div class="stat-card">
         <div class="stat-card-label">Chat Sessions</div>
-        <div class="stat-card-value" id="sess-count">—</div>
+        <div class="stat-card-value" id="sess-count">{{ dashboard_stats.chat_session_count }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">RAG Studio</div>
-        <div class="stat-card-value" style="font-size:18px;padding-top:6px;">
-          <a href="/studio" style="color:var(--accent);text-decoration:none;font-size:14px;font-weight:600;">Open →</a>
-        </div>
+        <div class="stat-card-label">Saved Requests</div>
+        <div class="stat-card-value" id="req-count">{{ dashboard_stats.request_count }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Total Tokens</div>
+        <div class="stat-card-value" id="tok-count">{{ "{:,}".format(dashboard_stats.total_tokens) }}</div>
       </div>
     </div>
 
@@ -595,26 +597,16 @@
 <div class="toast" id="toast"></div>
 
 <script>
-  // ── Stats from API ──────────────────────────────────────────────────────────
-  fetch('/api/tenants')
-    .then(r => r.json())
-    .then(tenants => {
-      // dataset count via history endpoint
-    })
-    .catch(() => {});
-
-  // quick fetch for session count
-  fetch('/history')
+  // Stats refresh
+  fetch('/api/usage-summary')
     .then(r => r.json())
     .then(d => {
-      document.getElementById('sess-count').textContent = d.count ?? '—';
+      document.getElementById('ds-count').textContent = d.dataset_count ?? '0';
+      document.getElementById('sess-count').textContent = d.chat_session_count ?? '0';
+      document.getElementById('req-count').textContent = d.request_count ?? '0';
+      document.getElementById('tok-count').textContent = Number(d.total_tokens || 0).toLocaleString();
     })
-    .catch(() => {
-      document.getElementById('sess-count').textContent = '0';
-    });
-
-  // dataset count — list data/ files via a simple endpoint we can fake
-  document.getElementById('ds-count').textContent = '{{ stats.values()|list|length if stats else 0 }}';
+    .catch(() => {});
 
   // ── Toast ───────────────────────────────────────────────────────────────────
   function showToast(msg, type = '') {

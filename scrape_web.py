@@ -13,14 +13,33 @@ from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeo
 
 # ── playwright-stealth: masks all headless-browser fingerprint tells ──────────
 # Install: pip install playwright-stealth
-# Fixes Cloudflare blocks, bot-detection timeouts, empty page responses.        ← NEW
+# Fixes Cloudflare blocks, bot-detection timeouts, empty page responses.
 try:
-    from playwright_stealth import stealth_sync                                 # ← NEW
-    STEALTH_AVAILABLE = True                                                    # ← NEW
-except ImportError:                                                             # ← NEW
-    STEALTH_AVAILABLE = False                                                   # ← NEW
-    print("[scraper] playwright-stealth not found — running without it.")       # ← NEW
-    print("[scraper] Install with: pip install playwright-stealth")             # ← NEW
+    from playwright_stealth import stealth_sync
+    STEALTH_AVAILABLE = True
+
+    def run_playwright_stealth(page) -> None:
+        stealth_sync(page)
+
+except ImportError as old_api_exc:
+    try:
+        from playwright_stealth import Stealth
+
+        STEALTH_AVAILABLE = True
+        _STEALTH = Stealth()
+
+        def run_playwright_stealth(page) -> None:
+            _STEALTH.apply_stealth_sync(page)
+
+    except ImportError as new_api_exc:
+        STEALTH_AVAILABLE = False
+
+        def run_playwright_stealth(page) -> None:
+            raise RuntimeError("playwright-stealth is not available")
+
+        print("[scraper] playwright-stealth not available — running without it.")
+        print(f"[scraper] Import errors: {old_api_exc}; {new_api_exc}")
+        print("[scraper] Install with: pip install playwright-stealth")
 
 DATA_PATH = "data"
 
@@ -56,12 +75,12 @@ EXTRA_HEADERS = {                                                               
 }                                                                               # ← NEW
 
 # Fallback JS patches for when playwright-stealth is not installed              ← NEW
-STEALTH_INIT_JS = """\                                                          
+STEALTH_INIT_JS = """
 Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
 Object.defineProperty(navigator, 'plugins',   {get: () => [1, 2, 3, 4, 5]});
 Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
 window.chrome = {runtime: {}};
-"""                                                                             # ← NEW
+""".strip()                                                                     # ← NEW
 
 
 # ── Stealth helper ────────────────────────────────────────────────────────────
@@ -73,7 +92,7 @@ def apply_stealth(page) -> None:                                                
     patches that hide the most common headless-browser signals.                 # ← NEW
     """                                                                         # ← NEW
     if STEALTH_AVAILABLE:                                                       # ← NEW
-        stealth_sync(page)                                                      # ← NEW
+        run_playwright_stealth(page)                                            # ← NEW
     else:                                                                       # ← NEW
         page.add_init_script(STEALTH_INIT_JS)                                  # ← NEW
 

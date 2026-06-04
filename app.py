@@ -1,19 +1,10 @@
 """
 app.py — Flask server with Admin Dashboard + RAG Studio
-
-Routes:
-    /               → Dashboard (tenant management)
-    /studio         → RAG Studio (existing test UI)
-    /ingest-url     → Scrape & index URL
-    /upload-file    → Upload & index file
-    /clear-chat     → Clear chat history
-    /select-dataset → Switch dataset filter
-    /api/tenants    → CRUD for tenants (JSON API)
 """
 
 import warnings
 warnings.filterwarnings("ignore")
-import os, json, logging, secrets
+import os, json, logging, secrets, re as _re
 from uuid import uuid4
 from urllib.parse import urlparse
 from pathlib import Path
@@ -37,11 +28,53 @@ CHAT_SESSIONS  = {}
 DATA_PATH      = "data"
 TENANTS_FILE   = Path("tenants.json")
 HISTORY_DIR    = Path("chat_histories")
+PROMPT_SETTINGS_FILE = Path("prompt_settings.json")
 ALLOWED_UPLOAD_EXTENSIONS = {".pdf", ".md", ".markdown", ".txt", ".docx", ".doc"}
 
+# ── Guardrails ─────────────────────────────────────────────────────────────────
+GUARDRAIL_RULES = [
+    (r"ignore (all |previous |prior |above |your )?(instructions?|rules?|guidelines?|constraints?|prompt)",
+     "Jailbreak attempt: cannot ignore system instructions"),
+    (r"pretend (you are|to be|you're|you re)",
+     "Jailbreak attempt: cannot impersonate other systems"),
+    (r"you are now|from now on you|forget (everything|all|your)",
+     "Jailbreak attempt: cannot override core behaviour"),
+    (r"\bDAN\b|do anything now|no restrictions|without restrictions|bypass",
+     "Jailbreak attempt: restricted keywords detected"),
+    (r"disregard (your |all |any )?(rules?|guidelines?|instructions?|training)",
+     "Jailbreak attempt: cannot disregard training"),
+    (r"\b(harm|hurt|kill|attack|destroy|illegal|weapon|exploit)\b",
+     "Harmful intent: prohibited keywords detected"),
+    (r"system prompt|<\|.*\|>|\[INST\]|###\s*(instruction|system)",
+     "Prompt injection: reserved tokens not allowed"),
+    (r"do not use (the |any )?(context|document|retriev)",
+     "Guardrail: cannot disable document context retrieval"),
+]
+
+def validate_prompt_settings(role: str, constraints: str):
+    violations = []
+    combined   = (role + " " + constraints).lower()
+    for pattern, message in GUARDRAIL_RULES:
+        if _re.search(pattern, combined, _re.IGNORECASE):
+            violations.append(message)
+    if len(role) > 500:
+        violations.append("Role must be under 500 characters")
+    if len(constraints) > 1000:
+        violations.append("Configuration must be under 1000 characters")
+    return violations
+
+def load_prompt_settings() -> dict:
+    if not PROMPT_SETTINGS_FILE.exists():
+        return {"draft": None, "published": None}
+    try:
+        return json.loads(PROMPT_SETTINGS_FILE.read_text("utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {"draft": None, "published": None}
+
+def save_prompt_settings(data: dict) -> None:
+    PROMPT_SETTINGS_FILE.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
 
 # ── Tenant helpers ─────────────────────────────────────────────────────────────
-
 def load_tenants() -> list:
     if not TENANTS_FILE.exists():
         return []
@@ -50,43 +83,31 @@ def load_tenants() -> list:
     except (json.JSONDecodeError, OSError):
         return []
 
-
 def save_tenants(tenants: list) -> None:
     TENANTS_FILE.write_text(json.dumps(tenants, indent=2, ensure_ascii=False), encoding="utf-8")
-
 
 def find_tenant(tenant_id: str) -> dict | None:
     return next((t for t in load_tenants() if t["id"] == tenant_id), None)
 
-
 def tenant_stats(tenant: dict) -> dict:
-    """Count chat sessions and data files for a tenant."""
     HISTORY_DIR.mkdir(exist_ok=True)
-    sessions = list(HISTORY_DIR.glob(f"chat_history_*.json"))
+    sessions = list(HISTORY_DIR.glob("chat_history_*.json"))
     datasets = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
-    return {
-        "session_count": len(sessions),
-        "dataset_count": len(datasets),
-    }
-
+    return {"session_count": len(sessions), "dataset_count": len(datasets)}
 
 # ── Session helpers ────────────────────────────────────────────────────────────
-
 def get_session_id():
     if "chat_session_id" not in session:
         session["chat_session_id"] = uuid4().hex
     return session["chat_session_id"]
 
-
 def get_chat_history():
     return CHAT_SESSIONS.setdefault(get_session_id(), [])
-
 
 def append_chat_turn(query, result):
     history = get_chat_history()
     history.append({"query": query, "result": result})
     del history[:-MAX_CHAT_TURNS]
-
 
 def get_available_datasets():
     data_dir = Path(DATA_PATH)
@@ -94,28 +115,19 @@ def get_available_datasets():
         return []
     return sorted([f.name for f in data_dir.glob("*.md")])
 
-
 def get_selected_dataset():
     return session.get("selected_dataset", None)
 
-
-# ══════════════════════════════════════════════════════════════════════════════
-# DASHBOARD ROUTES
-# ══════════════════════════════════════════════════════════════════════════════
-
+# ── Dashboard ──────────────────────────────────────────────────────────────────
 @app.route("/")
 def dashboard():
     tenants = load_tenants()
     stats   = {t["id"]: tenant_stats(t) for t in tenants}
     return render_template("dashboard.html", tenants=tenants, stats=stats)
 
-
-# ── Tenant API ─────────────────────────────────────────────────────────────────
-
 @app.route("/api/tenants", methods=["GET"])
 def api_list_tenants():
     return jsonify(load_tenants())
-
 
 @app.route("/api/tenants", methods=["POST"])
 def api_create_tenant():
@@ -124,20 +136,19 @@ def api_create_tenant():
     website = (data.get("website") or "").strip()
     if not name:
         return jsonify({"error": "name is required"}), 400
-
+    import datetime
     tenant = {
         "id":         uuid4().hex[:12],
         "name":       name,
         "website":    website,
         "api_key":    "ak_" + secrets.token_urlsafe(24),
-        "created_at": __import__("datetime").datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "created_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
         "notes":      data.get("notes", ""),
     }
     tenants = load_tenants()
     tenants.append(tenant)
     save_tenants(tenants)
     return jsonify(tenant), 201
-
 
 @app.route("/api/tenants/<tenant_id>", methods=["DELETE"])
 def api_delete_tenant(tenant_id):
@@ -147,7 +158,6 @@ def api_delete_tenant(tenant_id):
         return jsonify({"error": "not found"}), 404
     save_tenants(updated)
     return jsonify({"deleted": True})
-
 
 @app.route("/api/tenants/<tenant_id>/regenerate-key", methods=["POST"])
 def api_regenerate_key(tenant_id):
@@ -159,11 +169,59 @@ def api_regenerate_key(tenant_id):
             return jsonify({"api_key": t["api_key"]})
     return jsonify({"error": "not found"}), 404
 
+# ── Prompt Settings API ────────────────────────────────────────────────────────
+@app.route("/api/prompt-settings", methods=["GET"])
+def api_get_prompt_settings():
+    return jsonify(load_prompt_settings())
 
-# ══════════════════════════════════════════════════════════════════════════════
-# STUDIO ROUTES  (existing RAG test UI, moved to /studio)
-# ══════════════════════════════════════════════════════════════════════════════
+@app.route("/api/prompt-settings/draft", methods=["POST"])
+def api_save_draft():
+    import datetime
+    data        = request.get_json(force=True) or {}
+    role        = (data.get("role") or "").strip()
+    constraints = (data.get("constraints") or "").strip()
+    settings          = load_prompt_settings()
+    settings["draft"] = {
+        "role": role, "constraints": constraints,
+        "saved_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "status": "draft",
+    }
+    save_prompt_settings(settings)
+    return jsonify({"ok": True, "draft": settings["draft"]})
 
+@app.route("/api/prompt-settings/validate", methods=["POST"])
+def api_validate_prompt():
+    data        = request.get_json(force=True) or {}
+    role        = (data.get("role") or "").strip()
+    constraints = (data.get("constraints") or "").strip()
+    violations  = validate_prompt_settings(role, constraints)
+    return jsonify({"ok": len(violations) == 0, "violations": violations})
+
+@app.route("/api/prompt-settings/publish", methods=["POST"])
+def api_publish_prompt():
+    import datetime
+    data        = request.get_json(force=True) or {}
+    role        = (data.get("role") or "").strip()
+    constraints = (data.get("constraints") or "").strip()
+    violations  = validate_prompt_settings(role, constraints)
+    if violations:
+        return jsonify({"ok": False, "violations": violations}), 400
+    now       = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+    settings  = load_prompt_settings()
+    published = {"role": role, "constraints": constraints, "published_at": now, "status": "published"}
+    settings["published"] = published
+    settings["draft"]     = None
+    save_prompt_settings(settings)
+    query_data._PROMPT_TEMPLATE = None
+    return jsonify({"ok": True, "published": published})
+
+@app.route("/api/prompt-settings/reset", methods=["POST"])
+def api_reset_prompt():
+    save_prompt_settings({"draft": None, "published": None})
+    query_data._PROMPT_TEMPLATE = None
+    return jsonify({"ok": True})
+
+# ── Studio ─────────────────────────────────────────────────────────────────────
 @app.route("/studio", methods=["GET", "POST"])
 def studio():
     result       = None
@@ -172,30 +230,15 @@ def studio():
     chat_history = get_chat_history()
     if chat_history:
         result = chat_history[-1].get("result")
-
     if request.method == "POST":
         query    = request.form.get("query", "").strip()
         selected = get_selected_dataset()
         if query:
-            result = query_data.query_rag_web(
-                query,
-                chat_history=chat_history,
-                dataset_filter=selected,
-            )
+            result = query_data.query_rag_web(query, chat_history=chat_history, dataset_filter=selected)
             append_chat_turn(query, result)
-
-    return render_template(
-        "studio.html",
-        result=result,
-        query=query,
-        chat_history=chat_history,
-        ingest=ingest,
-        url="",
-        model=MODEL_NAME,
-        datasets=get_available_datasets(),
-        selected_dataset=get_selected_dataset(),
-    )
-
+    return render_template("studio.html", result=result, query=query,
+        chat_history=chat_history, ingest=ingest, url="", model=MODEL_NAME,
+        datasets=get_available_datasets(), selected_dataset=get_selected_dataset())
 
 @app.route("/select-dataset", methods=["POST"])
 def select_dataset():
@@ -208,17 +251,14 @@ def select_dataset():
     CHAT_SESSIONS[get_session_id()] = []
     return redirect(url_for("studio"))
 
-
 @app.route("/clear-chat", methods=["POST"])
 def clear_chat():
     CHAT_SESSIONS[get_session_id()] = []
     return redirect(url_for("studio"))
 
-
 @app.route("/images/<path:filename>")
 def images(filename):
     return send_from_directory("images", filename)
-
 
 @app.route("/ingest-url", methods=["POST"])
 def ingest_url():
@@ -232,24 +272,13 @@ def ingest_url():
         chunks      = split_documents(documents)
         add_to_chroma(chunks)
         query_data._DB = None
-        ingest = {
-            "ok":      True,
-            "message": f"Scraped {len(saved_paths)} page(s) from {url} and indexed them.",
-            "path":    ", ".join(saved_paths[:3]) + ("..." if len(saved_paths) > 3 else ""),
-        }
+        ingest = {"ok": True, "message": f"Scraped {len(saved_paths)} page(s) from {url} and indexed them.",
+                  "path": ", ".join(saved_paths[:3]) + ("..." if len(saved_paths) > 3 else "")}
     except Exception as exc:
         ingest = {"ok": False, "message": f"Could not scrape/index that URL: {exc}", "path": None}
-
-    return render_template(
-        "studio.html",
-        result=None, query=None,
-        chat_history=get_chat_history(),
-        ingest=ingest, url=url,
-        model=MODEL_NAME,
-        datasets=get_available_datasets(),
-        selected_dataset=get_selected_dataset(),
-    )
-
+    return render_template("studio.html", result=None, query=None,
+        chat_history=get_chat_history(), ingest=ingest, url=url, model=MODEL_NAME,
+        datasets=get_available_datasets(), selected_dataset=get_selected_dataset())
 
 @app.route("/upload-file", methods=["POST"])
 def upload_file():
@@ -268,24 +297,12 @@ def upload_file():
         chunks     = split_documents(documents)
         add_to_chroma(chunks)
         query_data._DB = None
-        ingest = {
-            "ok":      True,
-            "message": f"Uploaded, converted to Markdown, and indexed {original_name}.",
-            "path":    saved_path,
-        }
+        ingest = {"ok": True, "message": f"Uploaded, converted to Markdown, and indexed {original_name}.", "path": saved_path}
     except Exception as exc:
         ingest = {"ok": False, "message": f"Could not upload/index that file: {exc}", "path": None}
-
-    return render_template(
-        "studio.html",
-        result=None, query=None,
-        chat_history=get_chat_history(),
-        ingest=ingest, url="",
-        model=MODEL_NAME,
-        datasets=get_available_datasets(),
-        selected_dataset=get_selected_dataset(),
-    )
-
+    return render_template("studio.html", result=None, query=None,
+        chat_history=get_chat_history(), ingest=ingest, url="", model=MODEL_NAME,
+        datasets=get_available_datasets(), selected_dataset=get_selected_dataset())
 
 @app.route("/history/clear-all", methods=["POST"])
 def clear_all_histories():
@@ -293,60 +310,42 @@ def clear_all_histories():
     deleted = 0
     for f in HISTORY_DIR.glob("chat_history_*.json"):
         try:
-            f.unlink()
-            deleted += 1
+            f.unlink(); deleted += 1
         except OSError:
             continue
     return jsonify({"deleted": True, "deleted_count": deleted})
 
-
 # ── File helpers ───────────────────────────────────────────────────────────────
-
 def save_upload_as_markdown(uploaded_file, original_name: str) -> str:
     extension     = Path(original_name).suffix.lower()
     markdown_name = unique_markdown_filename(Path(original_name).stem)
     markdown_path = os.path.join(DATA_PATH, markdown_name)
-
-    if extension in {".md", ".markdown"}:
-        content = read_uploaded_text(uploaded_file)
-    elif extension == ".txt":
-        content = text_to_markdown(read_uploaded_text(uploaded_file), original_name)
-    elif extension == ".pdf":
-        content = pdf_to_markdown(uploaded_file, original_name)
-    elif extension in {".docx", ".doc"}:
-        content = docx_to_markdown(uploaded_file, original_name)
-    else:
-        raise ValueError("unsupported file type")
-
+    if extension in {".md", ".markdown"}:   content = read_uploaded_text(uploaded_file)
+    elif extension == ".txt":               content = text_to_markdown(read_uploaded_text(uploaded_file), original_name)
+    elif extension == ".pdf":               content = pdf_to_markdown(uploaded_file, original_name)
+    elif extension in {".docx", ".doc"}:    content = docx_to_markdown(uploaded_file, original_name)
+    else:                                   raise ValueError("unsupported file type")
     with open(markdown_path, "w", encoding="utf-8") as f:
         f.write(content.strip() + "\n")
     return markdown_path
 
-
 def unique_markdown_filename(base_name: str) -> str:
     safe_base = secure_filename(base_name) or "uploaded-document"
-    candidate = f"{safe_base}.md"
-    counter   = 2
+    candidate = f"{safe_base}.md"; counter = 2
     while os.path.exists(os.path.join(DATA_PATH, candidate)):
-        candidate = f"{safe_base}-{counter}.md"
-        counter  += 1
+        candidate = f"{safe_base}-{counter}.md"; counter += 1
     return candidate
-
 
 def read_uploaded_text(uploaded_file) -> str:
     raw = uploaded_file.read()
     for enc in ("utf-8", "utf-8-sig", "cp1252", "latin-1"):
-        try:
-            return raw.decode(enc)
-        except UnicodeDecodeError:
-            continue
+        try: return raw.decode(enc)
+        except UnicodeDecodeError: continue
     return raw.decode("utf-8", errors="replace")
-
 
 def text_to_markdown(text: str, original_name: str) -> str:
     title = Path(original_name).stem.replace("_", " ").replace("-", " ").strip()
     return f"# {title or 'Uploaded document'}\n\n{text.strip()}"
-
 
 def pdf_to_markdown(uploaded_file, original_name: str) -> str:
     uploaded_file.stream.seek(0)
@@ -355,43 +354,33 @@ def pdf_to_markdown(uploaded_file, original_name: str) -> str:
     sections = [f"# {title or 'Uploaded PDF'}"]
     for i, page in enumerate(reader.pages, 1):
         text = (page.extract_text() or "").strip()
-        if text:
-            sections.append(f"## Page {i}\n\n{text}")
-    if len(sections) == 1:
-        raise ValueError("could not extract readable text from that PDF")
+        if text: sections.append(f"## Page {i}\n\n{text}")
+    if len(sections) == 1: raise ValueError("could not extract readable text from that PDF")
     return "\n\n".join(sections)
-
 
 def docx_to_markdown(uploaded_file, original_name: str) -> str:
     if Path(original_name).suffix.lower() == ".doc":
         raise ValueError("legacy .doc files are not supported; please save it as .docx")
-    try:
-        from docx import Document
-    except ImportError as exc:
-        raise ValueError("Word uploads need python-docx installed") from exc
+    try: from docx import Document
+    except ImportError as exc: raise ValueError("Word uploads need python-docx installed") from exc
     uploaded_file.stream.seek(0)
     doc   = Document(uploaded_file.stream)
     title = Path(original_name).stem.replace("_", " ").replace("-", " ").strip()
     lines = [f"# {title or 'Uploaded Word document'}"]
     for p in doc.paragraphs:
         t = p.text.strip()
-        if t:
-            lines.append(t)
+        if t: lines.append(t)
     for table in doc.tables:
         for row in table.rows:
             cells = [c.text.strip().replace("\n", " ") for c in row.cells]
-            if any(cells):
-                lines.append("| " + " | ".join(cells) + " |")
-    if len(lines) == 1:
-        raise ValueError("could not extract readable text from that Word document")
+            if any(cells): lines.append("| " + " | ".join(cells) + " |")
+    if len(lines) == 1: raise ValueError("could not extract readable text from that Word document")
     return "\n\n".join(lines)
-
 
 def validate_url(url: str):
     parsed = urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.netloc:
         raise ValueError("enter a full http:// or https:// URL")
-
 
 def filename_from_url(url: str):
     parsed = urlparse(url)
@@ -400,7 +389,6 @@ def filename_from_url(url: str):
     base   = f"{domain}-{path}" if path else domain
     safe   = "".join(c if c.isalnum() or c in "-_." else "-" for c in base)
     return safe[:80]
-
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

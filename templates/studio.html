@@ -101,200 +101,6 @@
       font-weight: 600;
       color: var(--accent);
     }
-    .top-nav-spacer { flex: 1; }
-    .top-nav-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--muted);
-      background: transparent;
-      border: 1px solid transparent;
-      border-radius: 6px;
-      padding: 4px 10px;
-      cursor: pointer;
-      font-family: var(--sans);
-      transition: color 0.15s, border-color 0.15s, background 0.15s;
-    }
-    .top-nav-btn:hover {
-      color: var(--text);
-      background: rgba(255,255,255,0.05);
-      border-color: rgba(255,255,255,0.1);
-    }
-
-    /* ── Modals ── */
-    .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.72);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 200;
-      padding: 24px;
-      backdrop-filter: blur(4px);
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-panel {
-      width: min(640px, 100%);
-      max-height: min(85vh, 820px);
-      overflow: auto;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 16px;
-      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
-      padding: 24px;
-    }
-    .modal-panel.wide { width: min(860px, 100%); }
-    .modal-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 18px;
-    }
-    .modal-header h2 {
-      font-family: var(--mono);
-      font-size: 14px;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      color: var(--accent);
-    }
-    .modal-close {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      border-radius: 8px;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-      font-size: 18px;
-      line-height: 1;
-    }
-    .modal-close:hover { color: var(--text); border-color: var(--accent); }
-    .field-label {
-      display: block;
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
-    .field-textarea {
-      width: 100%;
-      min-height: 100px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 12px;
-      color: var(--text);
-      font-family: var(--sans);
-      font-size: 15px;
-      padding: 12px 14px;
-      resize: vertical;
-      outline: none;
-      margin-bottom: 16px;
-    }
-    .field-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,140,38,0.09); }
-    .modal-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 8px;
-    }
-    .modal-btn {
-      font-family: var(--mono);
-      font-size: 12px;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      border-radius: 10px;
-      padding: 10px 16px;
-      cursor: pointer;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.04);
-      color: var(--text);
-    }
-    .modal-btn:hover { border-color: var(--accent); }
-    .modal-btn.primary {
-      background: linear-gradient(135deg, #ff8c26 0%, #ffb86b 100%);
-      color: #0a0a0a;
-      border: none;
-    }
-    .modal-btn.success {
-      background: rgba(39,174,96,0.18);
-      border-color: var(--success);
-      color: var(--success);
-    }
-    .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .validation-box {
-      margin-top: 14px;
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-family: var(--mono);
-      font-size: 13px;
-      line-height: 1.5;
-    }
-    .validation-box.ok { border: 1px solid var(--success); color: var(--success); background: rgba(39,174,96,0.08); }
-    .validation-box.err { border: 1px solid var(--danger); color: #f0c5c5; background: rgba(192,57,43,0.1); }
-    .validation-box ul { margin: 8px 0 0 18px; }
-    .published-badge {
-      margin-top: 12px;
-      padding: 10px 12px;
-      border-radius: 10px;
-      border: 1px solid rgba(255,140,38,0.35);
-      background: rgba(255,140,38,0.08);
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .published-badge strong { color: var(--accent); }
-    .analytics-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .analytics-card {
-      padding: 14px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: rgba(255,255,255,0.02);
-    }
-    .analytics-card .label {
-      font-family: var(--mono);
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-    }
-    .analytics-card .value {
-      font-family: var(--mono);
-      font-size: 22px;
-      font-weight: 600;
-      color: var(--text);
-      margin-top: 6px;
-    }
-    .analytics-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-    .analytics-table th, .analytics-table td {
-      text-align: left;
-      padding: 8px 10px;
-      border-bottom: 1px solid var(--border);
-    }
-    .analytics-table th { color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
-    .analytics-section-title {
-      font-family: var(--mono);
-      font-size: 12px;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin: 18px 0 10px;
-    }
 
     /* ── Layout (offset for top-nav) ── */
     .layout {
@@ -419,6 +225,19 @@
       padding: 8px 12px;
     }
     .model-tag span { color: var(--accent); }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 24px;
+      backdrop-filter: blur(4px);
+    }
+    .modal-overlay.open { display: flex; }
 
     /* ── Dataset selector ── */
     .dataset-section { display: flex; flex-direction: column; gap: 10px; }
@@ -706,6 +525,129 @@
       border: 1px solid rgba(255,136,0,0.35); background: rgba(255,136,0,0.08);
       font-family: var(--mono); font-size: 12px; color: var(--accent); word-break: break-all;
     }
+    .modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.72);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 24px;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.open { display: flex; }
+.modal-panel {
+  width: min(640px, 100%);
+  max-height: min(85vh, 820px);
+  overflow: auto;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 16px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+  padding: 24px;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.modal-header h2 {
+  font-family: var(--mono);
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.modal-close {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+.modal-close:hover { color: var(--text); border-color: var(--accent); }
+.field-label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+.field-textarea {
+  width: 100%;
+  min-height: 100px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  padding: 12px 14px;
+  resize: vertical;
+  outline: none;
+  margin-bottom: 16px;
+}
+.field-textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,140,38,0.09); }
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 8px;
+}
+.modal-btn {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  border-radius: 10px;
+  padding: 10px 16px;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+}
+.modal-btn:hover { border-color: var(--accent); }
+.modal-btn.primary {
+  background: linear-gradient(135deg, #ff8c26 0%, #ffb86b 100%);
+  color: #0a0a0a;
+  border: none;
+}
+.modal-btn.success {
+  background: rgba(39,174,96,0.18);
+  border-color: var(--success);
+  color: var(--success);
+}
+.modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.validation-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.validation-box.ok { border: 1px solid var(--success); color: var(--success); background: rgba(39,174,96,0.08); }
+.validation-box.err { border: 1px solid var(--danger); color: #f0c5c5; background: rgba(192,57,43,0.1); }
+.validation-box ul { margin: 8px 0 0 18px; }
+.published-badge {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,140,38,0.35);
+  background: rgba(255,140,38,0.08);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+}
+.published-badge strong { color: var(--accent); }
 
     @media (max-width: 1050px) {
       .layout { grid-template-columns: 260px minmax(0,1fr); }
@@ -733,7 +675,6 @@
   <span class="top-nav-current">RAG Studio</span>
   <span class="top-nav-spacer"></span>
   <button type="button" class="top-nav-btn" id="btn-prompt-settings">Prompt Settings</button>
-  <button type="button" class="top-nav-btn" id="btn-analytics">Analytics</button>
 </nav>
 
 <div class="layout">
@@ -880,7 +821,10 @@
     <form method="POST" action="/studio" class="input-wrap">
       <textarea name="query"
         placeholder="{% if selected_dataset %}Ask anything from {{ selected_dataset }}…{% else %}Ask anything from your documents…{% endif %}"
-        rows="1" autofocus></textarea>
+        rows="1"
+        enterkeyhint="send"
+        onkeydown="if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); this.form.requestSubmit ? this.form.requestSubmit() : this.form.submit(); }"
+        autofocus></textarea>
       <button type="submit" class="send-btn" aria-label="Send">
         <svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">
           <path d="M8 2l6 6-6 6M2 8h12" stroke="#0a0a0a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
@@ -1016,9 +960,18 @@
       queryInput.readOnly = true;
       if (sendButton) sendButton.disabled = true;
     });
-    queryInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); queryForm.requestSubmit(); }
-    });
+    function submitQueryFromKeyboard(e) {
+      if (e.isComposing || e.key !== "Enter" || e.shiftKey) return;
+      e.preventDefault();
+      if (typeof queryForm.requestSubmit === "function") {
+        queryForm.requestSubmit();
+      } else {
+        const submitEvent = new Event("submit", { bubbles: true, cancelable: true });
+        if (queryForm.dispatchEvent(submitEvent)) queryForm.submit();
+      }
+    }
+
+    queryInput.addEventListener("keydown", submitQueryFromKeyboard);
   }
 
   if (uploadForm && uploadInput) {
@@ -1052,5 +1005,174 @@
   })();
 </script>
 <script src="http://localhost:8000/widget/chatbot.js?v=2"></script>
+
+<!-- PROMPT SETTINGS MODAL -->
+<div class="modal-overlay" id="prompt-modal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2>Configure Prompt</h2>
+      <button class="modal-close" onclick="closePromptModal()">&#x2715;</button>
+    </div>
+    <div id="published-info" class="published-badge" style="display:none;margin-bottom:14px;">
+      <strong>&#9679; Published</strong> &mdash; a custom prompt is currently active.
+      <span id="published-at" style="margin-left:6px;"></span>
+    </div>
+    <label class="field-label" for="prompt-role">Chatbot Role</label>
+    <textarea class="field-textarea" id="prompt-role" rows="3"
+      placeholder="e.g. You are a helpful customer support assistant for Alian Software. Always be professional and concise."></textarea>
+    <label class="field-label" for="prompt-constraints">Configuration / Instructions</label>
+    <textarea class="field-textarea" id="prompt-constraints" rows="4"
+      placeholder="e.g. Always answer in bullet points. Keep responses under 4 sentences. If you don't know, say so politely."></textarea>
+    <div style="display:flex;gap:16px;margin-top:-10px;margin-bottom:14px;">
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">Role: <span id="role-count">0</span>/500</span>
+      <span style="font-family:var(--mono);font-size:11px;color:var(--muted);">Config: <span id="constraints-count">0</span>/1000</span>
+    </div>
+    <div id="validation-box" class="validation-box" style="display:none;"></div>
+    <div class="modal-actions">
+      <button class="modal-btn" onclick="saveDraft()">Save Draft</button>
+      <button class="modal-btn" id="btn-validate" onclick="validatePrompt()">Check Guardrails</button>
+      <button class="modal-btn success" id="btn-publish" onclick="publishPrompt()" disabled>Publish</button>
+      <button class="modal-btn" onclick="resetPrompt()"
+        style="margin-left:auto;color:var(--danger);border-color:rgba(192,57,43,0.4);background:rgba(192,57,43,0.08);">
+        Reset to Default
+      </button>
+    </div>
+    <details style="margin-top:18px;">
+      <summary style="font-family:var(--mono);font-size:11px;color:var(--muted);cursor:pointer;letter-spacing:0.06em;">GUARDRAIL RULES</summary>
+      <div style="font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:10px;line-height:1.8;padding:10px 12px;background:rgba(255,255,255,0.02);border-radius:8px;border:1px solid var(--border);">
+        &#x2717; Cannot ignore or override system instructions<br>
+        &#x2717; Cannot impersonate other AI systems<br>
+        &#x2717; Cannot disable document context retrieval<br>
+        &#x2717; Cannot contain jailbreak keywords (DAN, bypass, no restrictions)<br>
+        &#x2717; Cannot contain harmful intent keywords<br>
+        &#x2717; Cannot contain prompt injection tokens<br>
+        &#x2713; Role max 500 chars &middot; Configuration max 1000 chars
+      </div>
+    </details>
+  </div>
+</div>
+
+<script>
+let _validatedOk = false;
+
+function openPromptModal() {
+  _validatedOk = false;
+  document.getElementById('btn-publish').disabled = true;
+  document.getElementById('validation-box').style.display = 'none';
+  document.getElementById('prompt-modal').classList.add('open');
+  fetch('/api/prompt-settings').then(r => r.json()).then(data => {
+    const active = data.published || data.draft;
+    if (active) {
+      document.getElementById('prompt-role').value        = active.role        || '';
+      document.getElementById('prompt-constraints').value = active.constraints || '';
+      updateCounts();
+    }
+    if (data.published) {
+      document.getElementById('published-info').style.display = 'block';
+      document.getElementById('published-at').textContent =
+        data.published.published_at ? '(published ' + data.published.published_at.slice(0,10) + ')' : '';
+    } else {
+      document.getElementById('published-info').style.display = 'none';
+    }
+  }).catch(() => {});
+}
+
+function closePromptModal() {
+  document.getElementById('prompt-modal').classList.remove('open');
+}
+
+function updateCounts() {
+  document.getElementById('role-count').textContent        = document.getElementById('prompt-role').value.length;
+  document.getElementById('constraints-count').textContent = document.getElementById('prompt-constraints').value.length;
+}
+
+document.getElementById('prompt-role').addEventListener('input', () => {
+  updateCounts(); _validatedOk = false; document.getElementById('btn-publish').disabled = true;
+});
+document.getElementById('prompt-constraints').addEventListener('input', () => {
+  updateCounts(); _validatedOk = false; document.getElementById('btn-publish').disabled = true;
+});
+
+async function saveDraft() {
+  const role = document.getElementById('prompt-role').value.trim();
+  const constraints = document.getElementById('prompt-constraints').value.trim();
+  const res  = await fetch('/api/prompt-settings/draft', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role, constraints}),
+  });
+  const data = await res.json();
+  showValidation(data.ok ? 'Draft saved. Run "Check Guardrails" before publishing.' : 'Failed to save draft.', data.ok ? 'ok' : 'err');
+}
+
+async function validatePrompt() {
+  const role = document.getElementById('prompt-role').value.trim();
+  const constraints = document.getElementById('prompt-constraints').value.trim();
+  await fetch('/api/prompt-settings/draft', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({role,constraints})});
+  const res  = await fetch('/api/prompt-settings/validate', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role, constraints}),
+  });
+  const data = await res.json();
+  if (data.ok) {
+    _validatedOk = true;
+    document.getElementById('btn-publish').disabled = false;
+    showValidation('&#x2713; All guardrails passed. You can now publish.', 'ok');
+  } else {
+    _validatedOk = false;
+    document.getElementById('btn-publish').disabled = true;
+    const list = data.violations.map(v => '<li>' + v + '</li>').join('');
+    showValidation('<strong>Guardrail violations &mdash; prompt denied:</strong><ul>' + list + '</ul>', 'err');
+  }
+}
+
+async function publishPrompt() {
+  if (!_validatedOk) { await validatePrompt(); return; }
+  const role = document.getElementById('prompt-role').value.trim();
+  const constraints = document.getElementById('prompt-constraints').value.trim();
+  const res  = await fetch('/api/prompt-settings/publish', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({role, constraints}),
+  });
+  const data = await res.json();
+  if (data.ok) {
+    showValidation('&#x2713; Prompt published! The chatbot will now use your custom instructions.', 'ok');
+    document.getElementById('published-info').style.display = 'block';
+    document.getElementById('published-at').textContent = '(just published)';
+    document.getElementById('btn-publish').disabled = true;
+    _validatedOk = false;
+  } else {
+    const list = (data.violations||[]).map(v=>'<li>'+v+'</li>').join('');
+    showValidation('<strong>Publish failed &mdash; guardrail violations:</strong><ul>'+list+'</ul>', 'err');
+  }
+}
+
+async function resetPrompt() {
+  if (!confirm('Reset to default prompt? This will remove your published configuration.')) return;
+  const res  = await fetch('/api/prompt-settings/reset', {method:'POST'});
+  const data = await res.json();
+  if (data.ok) {
+    document.getElementById('prompt-role').value        = '';
+    document.getElementById('prompt-constraints').value = '';
+    document.getElementById('published-info').style.display = 'none';
+    document.getElementById('btn-publish').disabled = true;
+    _validatedOk = false;
+    updateCounts();
+    showValidation('Prompt reset to default.', 'ok');
+  }
+}
+
+function showValidation(html, type) {
+  const box = document.getElementById('validation-box');
+  box.className = 'validation-box ' + type;
+  box.innerHTML = html;
+  box.style.display = 'block';
+}
+
+document.getElementById('btn-prompt-settings').addEventListener('click', openPromptModal);
+document.getElementById('prompt-modal').addEventListener('click', function(e) {
+  if (e.target === this) closePromptModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePromptModal(); });
+</script>
 </body>
 </html>

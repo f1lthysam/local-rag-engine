@@ -32,22 +32,25 @@
     {
       apiBase:        'http://localhost:8000',
       cssUrl:         _scriptBase + 'chatbot.css',
-      siteName:       'Alian Software',
-      assistantName:  'Alian Assistant',
-      placeholder:    'Ask anything about Alian Software…',
-      welcomeTitle:   'Hi, I\'m the Alian Assistant',
-      welcomeMessage: 'Ask me about our services, technologies, pricing, or anything on the Alian Software website.',
+      // siteName:       'Alian Software',
+      // assistantName:  'Alian Assistant',
+      // placeholder:    'Ask anything about Alian Software…',
+      // welcomeTitle:   'Hi, I\'m the Alian Assistant',
+      // welcomeMessage: 'Ask me about our services, technologies, pricing, or anything on the Alian Software website.',
       hints: [
         'What services do you offer?',
         'How can I get started?',
         'What technologies do you use?',
         'Tell me about your team',
       ],
+  
     },
-    window.AlianChatConfig || {}
+  
+  //   window.AlianChatConfig || {}
   );
 
-  /* ── State ───────────────────────────────────────────────────────────────── */
+/* ── State ───────────────────────────────────────────────────────────────── */
+
   const S = {
     open:      false,
     sessionId: null,

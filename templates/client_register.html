@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Account — RAG Portal</title>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #050507;
+    --surface:      #111214;
+    --surface2:     #1b1a20;
+    --border:       rgba(255,255,255,0.08);
+    --border2:      rgba(255,255,255,0.12);
+    --text:         #f4ece0;
+    --muted:        #b8aa9a;
+    --accent:       #ff8c26;
+    --accent-soft:  rgba(255,140,38,0.14);
+    --accent-glow:  rgba(255,140,38,0.3);
+    --danger:       #e05555;
+    --danger-soft:  rgba(224,85,85,0.12);
+    --success:      #3ecf8e;
+    --success-soft: rgba(62,207,142,0.12);
+    --sans:         'Inter', system-ui, sans-serif;
+    --radius:       14px;
+    --radius-sm:    8px;
+  }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,140,38,0.09), transparent 28%),
+      radial-gradient(circle at 85% 80%, rgba(255,140,38,0.05), transparent 22%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .box {
+    position: relative;
+    z-index: 1;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 40px;
+    width: 100%;
+    max-width: 440px;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.45);
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 28px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-icon {
+    width: 34px; height: 34px;
+    background: linear-gradient(135deg, #ff8c26, #ffb86b);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    flex-shrink: 0;
+  }
+  .logo-text {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+    margin-bottom: 4px;
+  }
+  p.sub {
+    color: var(--muted);
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+  .form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .form-input::placeholder { color: var(--muted); }
+  .form-input:focus {
+    border-color: rgba(255,140,38,0.5);
+    box-shadow: 0 0 0 3px rgba(255,140,38,0.1);
+  }
+
+  .hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 5px;
+    line-height: 1.4;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    width: 100%;
+    padding: 11px 18px;
+    border-radius: var(--radius-sm);
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    margin-top: 8px;
+    transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: linear-gradient(135deg, #ff8c26, #ffb86b);
+    color: #0a0a0a;
+    box-shadow: 0 4px 16px rgba(255,140,38,0.25);
+  }
+
+  .links {
+    margin-top: 22px;
+    text-align: center;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .links a {
+    color: var(--accent);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .links a:hover { text-decoration: underline; }
+
+  .alert {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    margin-bottom: 18px;
+    font-weight: 500;
+  }
+  .alert-error {
+    background: var(--danger-soft);
+    border: 1px solid rgba(224,85,85,0.25);
+    color: var(--danger);
+  }
+  .alert-success {
+    background: var(--success-soft);
+    border: 1px solid rgba(62,207,142,0.25);
+    color: var(--success);
+  }
+  .alert-warning {
+    background: rgba(245,158,11,0.1);
+    border: 1px solid rgba(245,158,11,0.25);
+    color: #f59e0b;
+  }
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="logo-wrap">
+    <div class="logo-icon">⬡</div>
+    <div>
+      <div class="logo-text">RAG Portal</div>
+      <div class="logo-sub">Client Access</div>
+    </div>
+  </div>
+
+  <h2>Create your account</h2>
+  <p class="sub">Set up your chatbot portal in seconds.</p>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }}">{{ msg }}</div>
+    {% endfor %}
+  {% endwith %}
+
+  <form method="POST">
+    <div class="form-group">
+      <label class="form-label">Company / Business Name</label>
+      <input class="form-input" type="text" name="company_name" value="{{ form.company_name if form else '' }}" required placeholder="e.g. Acme Corp">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Tenant ID</label>
+      <input class="form-input" type="text" name="tenant_id" value="{{ form.tenant_id if form else '' }}" placeholder="e.g. my-clothing-store" required pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, hyphens only">
+      <div class="hint">Lowercase letters, numbers, hyphens only. Cannot be changed later.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email Address</label>
+      <input class="form-input" type="email" name="email" value="{{ form.email if form else '' }}" required placeholder="you@example.com">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" name="password" minlength="8" required placeholder="Min 8 characters">
+      <div class="hint">Minimum 8 characters.</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Confirm Password</label>
+      <input class="form-input" type="password" name="confirm_password" required placeholder="••••••••">
+    </div>
+    <button class="btn btn-primary" type="submit">Create Account</button>
+  </form>
+
+  <div class="links">
+    Already have an account? <a href="/client/login">Log in</a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ company }} — Client Portal</title>
+<link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:           #050507;
+    --surface:      #111214;
+    --surface2:     #1b1a20;
+    --border:       rgba(255,255,255,0.08);
+    --border2:      rgba(255,255,255,0.12);
+    --text:         #f4ece0;
+    --muted:        #b8aa9a;
+    --accent:       #ff8c26;
+    --accent-soft:  rgba(255,140,38,0.14);
+    --accent-glow:  rgba(255,140,38,0.3);
+    --accent2:      #3ecf8e;
+    --danger:       #e05555;
+    --danger-soft:  rgba(224,85,85,0.12);
+    --success:      #3ecf8e;
+    --success-soft: rgba(62,207,142,0.12);
+    --warn:         #f59e0b;
+    --sans:         'Inter', system-ui, sans-serif;
+    --mono:         'Courier New', monospace;
+    --radius:       14px;
+    --radius-sm:    8px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 8% 10%, rgba(255,140,38,0.08), transparent 20%),
+      radial-gradient(circle at 92% 8%,  rgba(255,140,38,0.05), transparent 18%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  body { display: flex; }
+
+  /* ── Sidebar ── */
+  .sidebar {
+    width: 240px;
+    min-height: 100vh;
+    background: rgba(10,10,12,0.96);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 28px 16px;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 10;
+    gap: 4px;
+  }
+
+  .sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px 22px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+  }
+  .sidebar-logo-icon {
+    width: 32px; height: 32px;
+    background: linear-gradient(135deg, #ff8c26, #ffb86b);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .sidebar-logo-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: 0.02em;
+  }
+  .sidebar-logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 1px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 12px 5px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 450;
+    border-radius: var(--radius-sm);
+    border: 1px solid transparent;
+    transition: background 0.15s, color 0.15s;
+    user-select: none;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.04); color: var(--text); }
+  .nav-item.active {
+    background: var(--accent-soft);
+    border-color: rgba(255,140,38,0.25);
+    color: var(--accent);
+  }
+  .nav-item .icon { font-size: 15px; width: 18px; text-align: center; opacity: 0.8; }
+  .nav-item.active .icon { opacity: 1; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .sidebar-footer strong {
+    display: block;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 2px;
+  }
+
+  .logout-btn {
+    display: block;
+    margin-top: 10px;
+    padding: 7px 12px;
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid rgba(224,85,85,0.25);
+    border-radius: var(--radius-sm);
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    text-align: center;
+    transition: background 0.15s;
+  }
+  .logout-btn:hover { background: rgba(224,85,85,0.2); }
+
+  /* ── Main content ── */
+  .main {
+    margin-left: 240px;
+    flex: 1;
+    padding: 36px 40px;
+    max-width: calc(100vw - 240px);
+    position: relative;
+    z-index: 1;
+  }
+
+  .page-header { margin-bottom: 32px; }
+  .page-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+  }
+  .page-header p { color: var(--muted); font-size: 14px; margin-top: 4px; }
+
+  /* ── Tab sections ── */
+  .tab-section { display: none; }
+  .tab-section.active { display: block; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .card-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 18px;
+  }
+
+  /* ── Stat cards ── */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .stat-card .value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .stat-card .label {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  /* ── Charts ── */
+  .charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+  }
+  .chart-card h3 {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    margin-bottom: 16px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .chart-card canvas { max-height: 220px; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    padding: 10px 18px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    background: rgba(255,255,255,0.02);
+  }
+  tbody tr { border-bottom: 1px solid var(--border); transition: background 0.12s; }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td { padding: 12px 18px; font-size: 14px; color: var(--text); vertical-align: top; }
+  .q-cell { max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .a-cell { max-width: 400px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); }
+
+  /* ── Buttons ── */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 9px 18px;
+    border-radius: var(--radius-sm);
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: opacity 0.15s, transform 0.12s, box-shadow 0.15s;
+    text-decoration: none;
+  }
+  .btn:hover { opacity: 0.88; transform: translateY(-1px); }
+  .btn:active { transform: scale(0.97); }
+
+  .btn-primary {
+    background: linear-gradient(135deg, #ff8c26, #ffb86b);
+    color: #0a0a0a;
+    box-shadow: 0 4px 16px rgba(255,140,38,0.25);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.25); }
+  .btn-danger {
+    background: var(--danger-soft);
+    color: var(--danger);
+    border: 1px solid rgba(224,85,85,0.25);
+  }
+  .btn-success {
+    background: var(--success-soft);
+    color: var(--success);
+    border: 1px solid rgba(62,207,142,0.25);
+  }
+  .btn-sm { padding: 5px 12px; font-size: 12px; border-radius: 6px; }
+
+  /* ── Form inputs ── */
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+  input[type=text], input[type=url], input[type=number], input[type=password], textarea {
+    width: 100%;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, textarea:focus {
+    border-color: rgba(255,140,38,0.5);
+    box-shadow: 0 0 0 3px rgba(255,140,38,0.1);
+  }
+
+  /* ── Document list ── */
+  .doc-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .doc-item:last-child { border-bottom: none; }
+  .doc-name {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .doc-name .ext {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 600;
+    border: 1px solid rgba(255,140,38,0.2);
+  }
+  .doc-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* ── Upload zone ── */
+  .upload-zone {
+    border: 2px dashed var(--border2);
+    border-radius: var(--radius);
+    padding: 32px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    margin-bottom: 16px;
+  }
+  .upload-zone:hover, .upload-zone.drag-over {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+  }
+  .upload-zone p { color: var(--muted); font-size: 14px; margin-top: 8px; }
+  .upload-zone .icon { font-size: 32px; }
+
+  /* ── Scrape log ── */
+  .scrape-log {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent2);
+    max-height: 280px;
+    overflow-y: auto;
+    margin-top: 16px;
+    display: none;
+  }
+  .scrape-log .line { margin-bottom: 4px; }
+  .scrape-log .line.error { color: var(--danger); }
+  .scrape-log .line.done  { color: var(--success); }
+
+  /* ── Widget code block ── */
+  .code-block {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: #a8d8f0;
+    white-space: pre;
+    overflow-x: auto;
+    margin: 12px 0;
+  }
+
+  /* ── Toast ── */
+  .toast {
+    position: fixed;
+    bottom: 28px; right: 28px;
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: var(--radius-sm);
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.2s, transform 0.2s;
+    pointer-events: none;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast.success { border-color: rgba(62,207,142,0.4); color: var(--success); }
+  .toast.error   { border-color: rgba(224,85,85,0.4);  color: var(--danger);  }
+
+  /* ── Badge ── */
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .badge-green { background: var(--success-soft); color: var(--success); }
+  .badge-red   { background: var(--danger-soft);  color: var(--danger); }
+  .badge-orange { background: var(--accent-soft); color: var(--accent); }
+
+  /* ── Spinner ── */
+  .spinner {
+    display: inline-block;
+    width: 14px; height: 14px;
+    border: 2px solid rgba(255,255,255,0.15);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    vertical-align: middle;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+  .empty-state .icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<!-- ── Sidebar ── -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="sidebar-logo-icon">⬡</div>
+    <div>
+      <div class="sidebar-logo-text">RAG Portal</div>
+      <div class="sidebar-logo-sub">Client Panel</div>
+    </div>
+  </div>
+
+  <div class="nav-label">Main</div>
+  <nav>
+    <div class="nav-item active" onclick="switchTab('overview')">
+      <span class="icon">📊</span> Overview
+    </div>
+    <div class="nav-item" onclick="switchTab('analytics')">
+      <span class="icon">📈</span> Analytics
+    </div>
+    <div class="nav-item" onclick="switchTab('history')">
+      <span class="icon">💬</span> Chat History
+    </div>
+    <div class="nav-item" onclick="switchTab('documents')">
+      <span class="icon">📄</span> Documents
+    </div>
+    <div class="nav-item" onclick="switchTab('scraper')">
+      <span class="icon">🕷️</span> Web Scraper
+    </div>
+    <div class="nav-item" onclick="switchTab('settings')">
+      <span class="icon">⚙️</span> Settings
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <strong>{{ company }}</strong>
+    {{ email }}
+    <a href="/client/logout" class="logout-btn">Log out</a>
+  </div>
+</aside>
+
+<!-- ── Main ── -->
+<main class="main">
+
+  <!-- ── Overview ── -->
+  <section class="tab-section active" id="tab-overview">
+    <div class="page-header">
+      <h1>Welcome back 👋</h1>
+      <p>Here's a snapshot of your chatbot's activity.</p>
+    </div>
+
+    <div class="stats-row" id="overview-stats">
+      <div class="stat-card"><div class="value" id="stat-queries">—</div><div class="label">Queries (30d)</div></div>
+      <div class="stat-card"><div class="value" id="stat-sessions">—</div><div class="label">Sessions (30d)</div></div>
+      <div class="stat-card"><div class="value" id="stat-answered">—%</div><div class="label">Answered rate</div></div>
+      <div class="stat-card"><div class="value" id="stat-docs">—</div><div class="label">Documents</div></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Queries — Last 7 Days</div>
+      <canvas id="overview-chart" style="max-height:180px;"></canvas>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Top Questions This Month</div>
+      <div id="overview-top-questions" class="empty-state">Loading…</div>
+    </div>
+  </section>
+
+  <!-- ── Analytics ── -->
+  <section class="tab-section" id="tab-analytics">
+    <div class="page-header">
+      <h1>Analytics</h1>
+      <p>Usage charts for the last 30 days.</p>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card"><h3>Queries per Day</h3><canvas id="chart-queries-per-day"></canvas></div>
+      <div class="chart-card"><h3>Peak Hours</h3><canvas id="chart-peak-hours"></canvas></div>
+      <div class="chart-card"><h3>Answered vs Unanswered</h3><canvas id="chart-answered"></canvas></div>
+      <div class="chart-card"><h3>Top 10 Questions</h3><canvas id="chart-top-questions"></canvas></div>
+    </div>
+  </section>
+
+  <!-- ── Chat History ── -->
+  <section class="tab-section" id="tab-history">
+    <div class="page-header">
+      <h1>Chat History</h1>
+      <p>Last 50 conversations from your chatbot.</p>
+    </div>
+    <div class="card">
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>Question</th>
+              <th>Answer</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody">
+            <tr><td colspan="3" class="empty-state">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Documents ── -->
+  <section class="tab-section" id="tab-documents">
+    <div class="page-header">
+      <h1>Documents</h1>
+      <p>Manage the files your chatbot is trained on.</p>
+    </div>
+    <div class="card">
+      <div class="card-title">Upload New Document</div>
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <div class="icon">📂</div>
+        <strong>Click to upload</strong>
+        <p>Supported: PDF, MD, TXT &nbsp;·&nbsp; Max 10MB</p>
+      </div>
+      <input type="file" id="file-input" accept=".pdf,.md,.txt,.markdown" style="display:none">
+      <div id="upload-status"></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Your Documents</div>
+      <div id="doc-list"><div class="empty-state">Loading…</div></div>
+    </div>
+  </section>
+
+  <!-- ── Web Scraper ── -->
+  <section class="tab-section" id="tab-scraper">
+    <div class="page-header">
+      <h1>Web Scraper</h1>
+      <p>Re-scrape your website to update the chatbot's knowledge.</p>
+    </div>
+    <div class="card">
+      <div class="form-group">
+        <label>Your Website URL</label>
+        <input type="url" id="scrape-url" placeholder="https://yourstore.com">
+      </div>
+      <div class="form-group">
+        <label>Max Pages to Scrape</label>
+        <input type="number" id="scrape-max" value="50" min="5" max="300">
+      </div>
+      <button class="btn btn-primary" onclick="startScrape()">
+        🕷️ Start Scraping
+      </button>
+      <p style="font-size:12px; color:var(--muted); margin-top:12px;">
+        This replaces your existing scraped data with fresh content from your website.
+      </p>
+      <div class="scrape-log" id="scrape-log"></div>
+    </div>
+  </section>
+
+  <!-- ── Settings ── -->
+  <section class="tab-section" id="tab-settings">
+    <div class="page-header">
+      <h1>Settings</h1>
+      <p>Manage your account and get your embed code.</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Embed Your Chatbot</div>
+      <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">
+        Paste this code into your website's HTML just before the <code style="color:var(--accent);background:var(--accent-soft);padding:1px 5px;border-radius:4px;">&lt;/body&gt;</code> tag.
+      </p>
+      <div class="code-block" id="widget-code">Loading…</div>
+      <button class="btn btn-ghost" onclick="copyWidgetCode()">📋 Copy Code</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Change Password</div>
+      <div class="form-group">
+        <label>Current Password</label>
+        <input type="password" id="old-pw" placeholder="••••••••">
+      </div>
+      <div class="form-group">
+        <label>New Password</label>
+        <input type="password" id="new-pw" placeholder="Min 8 characters">
+      </div>
+      <div class="form-group">
+        <label>Confirm New Password</label>
+        <input type="password" id="confirm-pw" placeholder="••••••••">
+      </div>
+      <button class="btn btn-primary" onclick="changePassword()">Update Password</button>
+    </div>
+  </section>
+
+</main>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ── Chart.js defaults ─────────────────────────────────────────────────────────
+Chart.defaults.color = '#b8aa9a';
+Chart.defaults.borderColor = 'rgba(255,255,255,0.08)';
+Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
+// ── State ─────────────────────────────────────────────────────────────────────
+let analyticsData = null;
+let chartsBuilt   = false;
+const charts      = {};
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  document.querySelector(`[onclick="switchTab('${name}')"]`).classList.add('active');
+  if (name === 'analytics' && analyticsData && !chartsBuilt) buildCharts();
+  if (name === 'history')   loadHistory();
+  if (name === 'documents') loadDocuments();
+  if (name === 'settings')  loadWidgetCode();
+}
+
+// ── Toast ─────────────────────────────────────────────────────────────────────
+function toast(msg, type='success') {
+  const el = document.getElementById('toast');
+  el.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  el.className = 'toast show ' + type;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+async function loadAnalytics() {
+  const res  = await fetch('/client/api/analytics');
+  analyticsData = await res.json();
+  const { total_queries, total_sessions, answered_rate } = analyticsData;
+  const rate = answered_rate.answered + answered_rate.unanswered > 0
+    ? Math.round(answered_rate.answered / (answered_rate.answered + answered_rate.unanswered) * 100)
+    : 0;
+  document.getElementById('stat-queries').textContent   = total_queries;
+  document.getElementById('stat-sessions').textContent  = total_sessions;
+  document.getElementById('stat-answered').textContent  = rate + '%';
+  const last7 = analyticsData.queries_per_day.slice(-7);
+  buildMiniChart(last7);
+  const topQ = analyticsData.top_questions.slice(0, 5);
+  const topEl = document.getElementById('overview-top-questions');
+  if (topQ.length === 0) {
+    topEl.innerHTML = '<div class="empty-state"><div class="icon">💬</div>No queries yet.</div>';
+  } else {
+    topEl.innerHTML = topQ.map(q => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:13px;">${escHtml(q.question)}</span>
+        <span class="badge badge-orange">${q.count}×</span>
+      </div>
+    `).join('');
+  }
+}
+
+function buildMiniChart(data) {
+  const ctx = document.getElementById('overview-chart').getContext('2d');
+  if (charts.mini) charts.mini.destroy();
+  charts.mini = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: data.map(d => d.date.slice(5)),
+      datasets: [{
+        data: data.map(d => d.count),
+        backgroundColor: 'rgba(255,140,38,0.4)',
+        borderColor: '#ff8c26',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+}
+
+function buildCharts() {
+  chartsBuilt = true;
+  const d = analyticsData;
+  makeChart('chart-queries-per-day', 'line', {
+    labels: d.queries_per_day.map(x => x.date.slice(5)),
+    datasets: [{ label: 'Queries', data: d.queries_per_day.map(x => x.count), borderColor: '#ff8c26', backgroundColor: 'rgba(255,140,38,0.12)', fill: true, tension: 0.3 }]
+  });
+  makeChart('chart-peak-hours', 'bar', {
+    labels: d.peak_hours.map(x => x.hour + ':00'),
+    datasets: [{ label: 'Queries', data: d.peak_hours.map(x => x.count), backgroundColor: 'rgba(62,207,142,0.35)', borderColor: '#3ecf8e', borderWidth: 1, borderRadius: 3 }]
+  });
+  makeChart('chart-answered', 'doughnut', {
+    labels: ['Answered', 'Unanswered'],
+    datasets: [{ data: [d.answered_rate.answered, d.answered_rate.unanswered], backgroundColor: ['rgba(62,207,142,0.55)', 'rgba(224,85,85,0.45)'], borderColor: ['#3ecf8e', '#e05555'], borderWidth: 1 }]
+  }, { plugins: { legend: { position: 'bottom' } } });
+  makeChart('chart-top-questions', 'bar', {
+    labels: d.top_questions.map(q => q.question.slice(0, 30) + '…'),
+    datasets: [{ label: 'Count', data: d.top_questions.map(q => q.count), backgroundColor: 'rgba(255,140,38,0.4)', borderColor: '#ff8c26', borderWidth: 1, borderRadius: 3 }]
+  }, { indexAxis: 'y', plugins: { legend: { display: false } } });
+}
+
+function makeChart(id, type, data, extraOpts={}) {
+  const ctx = document.getElementById(id).getContext('2d');
+  if (charts[id]) charts[id].destroy();
+  charts[id] = new Chart(ctx, { type, data, options: { responsive: true, plugins: { legend: { display: false } }, ...extraOpts } });
+}
+
+// ── Chat history ──────────────────────────────────────────────────────────────
+async function loadHistory() {
+  const res  = await fetch('/client/api/chat-history');
+  const data = await res.json();
+  const tbody = document.getElementById('history-tbody');
+  if (!data.history.length) {
+    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">No chat history yet.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.history.map(h => `
+    <tr>
+      <td class="q-cell" title="${escHtml(h.question)}">${escHtml(h.question)}</td>
+      <td class="a-cell" title="${escHtml(h.answer)}">${escHtml(h.answer || '—')}</td>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap;">${formatTs(h.timestamp)}</td>
+    </tr>
+  `).join('');
+}
+
+// ── Documents ─────────────────────────────────────────────────────────────────
+async function loadDocuments() {
+  const res  = await fetch('/client/api/documents');
+  const data = await res.json();
+  const el   = document.getElementById('doc-list');
+  document.getElementById('stat-docs').textContent = data.documents.length;
+  if (!data.documents.length) {
+    el.innerHTML = '<div class="empty-state"><div class="icon">📄</div>No documents yet. Upload one above.</div>';
+    return;
+  }
+  el.innerHTML = data.documents.map(doc => `
+    <div class="doc-item">
+      <div>
+        <div class="doc-name">
+          <span class="ext">${doc.name.split('.').pop().toUpperCase()}</span>
+          ${escHtml(doc.name)}
+        </div>
+        <div class="doc-meta">${doc.size_kb} KB &nbsp;·&nbsp; ${formatTs(doc.modified)}</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteDoc('${escHtml(doc.name)}')">🗑 Delete</button>
+    </div>
+  `).join('');
+}
+
+document.getElementById('file-input').addEventListener('change', async function() {
+  if (!this.files.length) return;
+  const file = this.files[0];
+  const statusEl = document.getElementById('upload-status');
+  statusEl.innerHTML = '<span class="spinner"></span> Uploading and ingesting…';
+  const form = new FormData();
+  form.append('file', file);
+  const res  = await fetch('/client/api/documents', { method: 'POST', body: form });
+  const data = await res.json();
+  if (data.ok) { toast('Document uploaded and ingested!'); loadDocuments(); statusEl.innerHTML = ''; }
+  else { toast(data.error, 'error'); statusEl.innerHTML = ''; }
+  this.value = '';
+});
+
+async function deleteDoc(name) {
+  if (!confirm(`Delete "${name}"? This removes it from the chatbot's knowledge.`)) return;
+  const res  = await fetch('/client/api/documents/' + encodeURIComponent(name), { method: 'DELETE' });
+  const data = await res.json();
+  data.ok ? (toast('Document deleted.'), loadDocuments()) : toast(data.error, 'error');
+}
+
+const zone = document.getElementById('upload-zone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag-over'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag-over');
+  const dt = e.dataTransfer;
+  if (dt.files.length) { document.getElementById('file-input').files = dt.files; document.getElementById('file-input').dispatchEvent(new Event('change')); }
+});
+
+// ── Scraper ───────────────────────────────────────────────────────────────────
+async function startScrape() {
+  const url = document.getElementById('scrape-url').value.trim();
+  const maxPages = parseInt(document.getElementById('scrape-max').value) || 50;
+  if (!url) { toast('Enter a URL first.', 'error'); return; }
+  const logEl = document.getElementById('scrape-log');
+  logEl.style.display = 'block'; logEl.innerHTML = '';
+  const res  = await fetch('/client/api/scrape', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url, max_pages: maxPages }) });
+  const data = await res.json();
+  if (!data.ok) { toast(data.error, 'error'); return; }
+  const source = new EventSource('/client/api/scrape/stream');
+  source.onmessage = e => {
+    const { line } = JSON.parse(e.data);
+    const div = document.createElement('div');
+    div.className = 'line' + (line.includes('error') || line.includes('Error') ? ' error' : line === '__DONE__' ? ' done' : '');
+    div.textContent = line === '__DONE__' ? '✓ Scrape complete! Chatbot updated.' : line;
+    logEl.appendChild(div); logEl.scrollTop = logEl.scrollHeight;
+    if (line === '__DONE__') { source.close(); toast('Scrape complete!'); }
+  };
+  source.onerror = () => { source.close(); toast('Scrape stream error.', 'error'); };
+}
+
+// ── Settings ──────────────────────────────────────────────────────────────────
+async function loadWidgetCode() {
+  const res  = await fetch('/client/api/widget-code');
+  const data = await res.json();
+  document.getElementById('widget-code').textContent = data.code;
+}
+
+function copyWidgetCode() {
+  const code = document.getElementById('widget-code').textContent;
+  navigator.clipboard.writeText(code).then(() => toast('Embed code copied!'));
+}
+
+async function changePassword() {
+  const body = {
+    old_password:     document.getElementById('old-pw').value,
+    new_password:     document.getElementById('new-pw').value,
+    confirm_password: document.getElementById('confirm-pw').value,
+  };
+  const res  = await fetch('/client/api/change-password', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (data.ok) { toast('Password updated!'); ['old-pw','new-pw','confirm-pw'].forEach(id => document.getElementById(id).value = ''); }
+  else { toast(data.error, 'error'); }
+}
+
+// ── Utils ─────────────────────────────────────────────────────────────────────
+function escHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function formatTs(ts) {
+  if (!ts) return '—';
+  try { return new Date(ts).toLocaleString(); } catch { return ts; }
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+loadAnalytics();
+</script>
+</body>
+</html>

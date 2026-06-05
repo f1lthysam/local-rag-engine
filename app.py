@@ -1,10 +1,13 @@
 """
 app.py — Flask server with Admin Dashboard + RAG Studio
 """
+from client_auth import register_client_auth
+from client_portal import client_portal_bp
 
 import warnings
 warnings.filterwarnings("ignore")
 import os, json, logging, secrets, re as _re
+import datetime
 from uuid import uuid4
 from urllib.parse import urlparse
 from pathlib import Path
@@ -20,6 +23,10 @@ from scrape_web import scrape_and_save, scrape_full_website
 from usage_analytics import record_query_event, usage_summary
 
 app = Flask(__name__, template_folder="templates")
+
+app.register_blueprint(client_portal_bp)
+register_client_auth(app)
+
 app.config["TEMPLATES_AUTO_RELOAD"] = True
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "local-rag-dev-secret")
 
@@ -97,11 +104,11 @@ def tenant_stats(tenant: dict) -> dict:
     return {"session_count": len(sessions), "dataset_count": len(datasets)}
 
 def dashboard_stats() -> dict:
-    datasets = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
+    datasets  = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
     histories = list(HISTORY_DIR.glob("chat_history_*.json")) if HISTORY_DIR.exists() else []
-    usage = usage_summary()
+    usage     = usage_summary()
     return {
-        "dataset_count": len(datasets),
+        "dataset_count":      len(datasets),
         "chat_session_count": len(histories),
         **usage,
     }
@@ -151,14 +158,16 @@ def api_create_tenant():
     website = (data.get("website") or "").strip()
     if not name:
         return jsonify({"error": "name is required"}), 400
-    import datetime
     tenant = {
-        "id":         uuid4().hex[:12],
-        "name":       name,
-        "website":    website,
-        "api_key":    "ak_" + secrets.token_urlsafe(24),
-        "created_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "notes":      data.get("notes", ""),
+        "id":            uuid4().hex[:12],
+        "name":          name,
+        "website":       website,
+        "api_key":       "ak_" + secrets.token_urlsafe(24),
+        "created_at":    datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "notes":         data.get("notes", ""),
+        "request_limit": int(data.get("request_limit", 1000)),
+        "requests_used": 0,
+        "blocked":       False,
     }
     tenants = load_tenants()
     tenants.append(tenant)
@@ -184,6 +193,53 @@ def api_regenerate_key(tenant_id):
             return jsonify({"api_key": t["api_key"]})
     return jsonify({"error": "not found"}), 404
 
+@app.route("/api/tenants/<tenant_id>/limit", methods=["POST"])
+def api_set_limit(tenant_id):
+    data  = request.get_json(force=True) or {}
+    limit = data.get("request_limit")
+    if limit is None or not isinstance(limit, (int, float)) or int(limit) < 0:
+        return jsonify({"error": "request_limit must be a non-negative integer"}), 400
+    tenants = load_tenants()
+    for t in tenants:
+        if t["id"] == tenant_id:
+            t["request_limit"] = int(limit)
+            if t.get("requests_used", 0) < int(limit):
+                t["blocked"] = False
+            save_tenants(tenants)
+            return jsonify({"ok": True, "request_limit": t["request_limit"]})
+    return jsonify({"error": "not found"}), 404
+
+@app.route("/api/tenants/<tenant_id>/block", methods=["POST"])
+def api_block_tenant(tenant_id):
+    tenants = load_tenants()
+    for t in tenants:
+        if t["id"] == tenant_id:
+            t["blocked"] = True
+            save_tenants(tenants)
+            return jsonify({"ok": True, "blocked": True})
+    return jsonify({"error": "not found"}), 404
+
+@app.route("/api/tenants/<tenant_id>/unblock", methods=["POST"])
+def api_unblock_tenant(tenant_id):
+    tenants = load_tenants()
+    for t in tenants:
+        if t["id"] == tenant_id:
+            t["blocked"] = False
+            save_tenants(tenants)
+            return jsonify({"ok": True, "blocked": False})
+    return jsonify({"error": "not found"}), 404
+
+@app.route("/api/tenants/<tenant_id>/reset-usage", methods=["POST"])
+def api_reset_usage(tenant_id):
+    tenants = load_tenants()
+    for t in tenants:
+        if t["id"] == tenant_id:
+            t["requests_used"] = 0
+            t["blocked"]       = False
+            save_tenants(tenants)
+            return jsonify({"ok": True})
+    return jsonify({"error": "not found"}), 404
+
 # ── Prompt Settings API ────────────────────────────────────────────────────────
 @app.route("/api/prompt-settings", methods=["GET"])
 def api_get_prompt_settings():
@@ -191,15 +247,15 @@ def api_get_prompt_settings():
 
 @app.route("/api/prompt-settings/draft", methods=["POST"])
 def api_save_draft():
-    import datetime
     data        = request.get_json(force=True) or {}
     role        = (data.get("role") or "").strip()
     constraints = (data.get("constraints") or "").strip()
     settings          = load_prompt_settings()
     settings["draft"] = {
-        "role": role, "constraints": constraints,
-        "saved_at": datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "status": "draft",
+        "role":        role,
+        "constraints": constraints,
+        "saved_at":    datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "status":      "draft",
     }
     save_prompt_settings(settings)
     return jsonify({"ok": True, "draft": settings["draft"]})
@@ -214,7 +270,6 @@ def api_validate_prompt():
 
 @app.route("/api/prompt-settings/publish", methods=["POST"])
 def api_publish_prompt():
-    import datetime
     data        = request.get_json(force=True) or {}
     role        = (data.get("role") or "").strip()
     constraints = (data.get("constraints") or "").strip()

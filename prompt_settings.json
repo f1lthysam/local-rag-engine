@@ -1,4 +1,9 @@
 {
   "draft": null,
-  "published": null
+  "published": {
+    "role": "",
+    "constraints": "",
+    "published_at": "2026-06-05T06:24:06Z",
+    "status": "published"
+  }
 }

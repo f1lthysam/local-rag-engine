@@ -32,6 +32,44 @@ except ImportError as _exc:
 
 from usage_analytics import record_session_event
 
+import json
+from pathlib import Path
+
+TENANTS_FILE = Path("tenants.json")
+
+def _load_tenants():
+    if not TENANTS_FILE.exists():
+        return []
+    try:
+        return json.loads(TENANTS_FILE.read_text("utf-8"))
+    except Exception:
+        return []
+
+def _save_tenants(tenants):
+    TENANTS_FILE.write_text(json.dumps(tenants, indent=2, ensure_ascii=False), encoding="utf-8")
+
+def _check_and_increment(api_key: str) -> dict:
+    """
+    Returns {"allowed": True} or {"allowed": False, "reason": "..."}
+    Also increments requests_used if allowed.
+    """
+    tenants = _load_tenants()
+    for t in tenants:
+        if t.get("api_key") == api_key:
+            used  = t.get("requests_used", 0)
+            limit = t.get("request_limit", 1000)
+            if t.get("blocked", False):
+                return {"allowed": False, "reason": "Your chatbot has been paused by the administrator."}
+            if used >= limit:
+                t["blocked"] = True   # auto-block when limit hit
+                _save_tenants(tenants)
+                return {"allowed": False, "reason": "Request limit reached. Please contact support to continue."}
+            t["requests_used"] = used + 1
+            _save_tenants(tenants)
+            return {"allowed": True}
+    # no matching tenant — still allow (widget may not pass api_key in all setups)
+    return {"allowed": True}
+
 
 app = FastAPI(
     title="Alian Software RAG Chatbot API",
@@ -131,8 +169,9 @@ def _persist_session(sid: str) -> dict | None:
 
 
 class ChatRequest(BaseModel):
-    question: str
+    question:   str
     session_id: Optional[str] = None
+    api_key:    Optional[str] = None
 
 
 class SessionEndRequest(BaseModel):
@@ -161,6 +200,11 @@ async def chat(req: ChatRequest):
     sid = req.session_id if req.session_id and _safe_sid(req.session_id) else str(uuid.uuid4())
     session = _get_or_create_active(sid, question)
 
+
+    # Store api_key in session on first message so limit check works
+    if req.api_key and not session.get("api_key"):
+        session["api_key"] = req.api_key
+        
     if not session.get("messages"):
         session["title"] = (question[:47] + "…") if len(question) > 47 else question
 
@@ -169,6 +213,15 @@ async def chat(req: ChatRequest):
     )
 
     chat_history = _session_to_chat_history(session)
+
+    # ── Request limit check ───────────────────────────────────────────────────
+    api_key = req.api_key if hasattr(req, 'api_key') else None
+    # Try to get it from session metadata or active session
+    stored_key = session.get("api_key")
+    if stored_key:
+        limit_check = _check_and_increment(stored_key)
+        if not limit_check["allowed"]:
+            return {"answer": limit_check["reason"], "session_id": sid, "title": session["title"]}
 
     try:
         raw = query_rag_web(question, chat_history=chat_history)

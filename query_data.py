@@ -26,6 +26,27 @@ MIN_CONTEXT_TOKENS = 900
 MAX_CONTEXT_TOKENS = 4200
 MAX_RETRIEVAL_K = 14
 MAX_HISTORY_CHARS = 2500
+FOUL_LANGUAGE_RESPONSE = "Please keep the conversation respectful. I can't process requests that contain foul language."
+FOUL_LANGUAGE_TERMS = {
+    "ass",
+    "asshole",
+    "bastard",
+    "bitch",
+    "bullshit",
+    "crap",
+    "cunt",
+    "damn",
+    "dick",
+    "fuck",
+    "fucker",
+    "fucking",
+    "motherfucker",
+    "piss",
+    "prick",
+    "shit",
+    "slut",
+    "whore",
+}
 _DB = None
 _PROMPT_TEMPLATE = None
 _GEMINI_MODEL = None
@@ -70,6 +91,40 @@ Question: {question}
 def count_tokens(text: str) -> int:
     enc = tiktoken.get_encoding("cl100k_base")
     return len(enc.encode(str(text)))
+
+
+def normalize_for_profanity(text: str) -> str:
+    normalized = str(text).lower()
+    normalized = normalized.replace("@", "a").replace("$", "s").replace("!", "i")
+    return re.sub(r"[^a-z0-9]+", " ", normalized).strip()
+
+
+def contains_foul_language(text: str) -> bool:
+    words = set(normalize_for_profanity(text).split())
+    return bool(words & FOUL_LANGUAGE_TERMS)
+
+
+def foul_language_result(query_text: str, start_time: float | None = None,
+                         dataset_filter: str = None) -> dict:
+    latency = 0 if start_time is None else time.perf_counter() - start_time
+    response_tokens = count_tokens(FOUL_LANGUAGE_RESPONSE)
+    prompt_tokens = count_tokens(query_text)
+    return {
+        "response":        FOUL_LANGUAGE_RESPONSE,
+        "confidence":      None,
+        "sources":         [],
+        "no_info":         True,
+        "blocked":         True,
+        "block_reason":    "foul_language",
+        "latency":         round(latency, 2),
+        "prompt_tokens":   prompt_tokens,
+        "response_tokens": response_tokens,
+        "total_tokens":    prompt_tokens + response_tokens,
+        "retrieval_mode":  "guardrail",
+        "retrieved_chunks": 0,
+        "context_tokens":  0,
+        "dataset_filter":  dataset_filter,
+    }
 
 
 def extract_response_text(raw) -> str:
@@ -129,6 +184,15 @@ def query_rag(
     dataset_filter: str = None,
 ):
     start_time     = time.perf_counter()
+    if contains_foul_language(query_text):
+        result = foul_language_result(query_text, start_time, dataset_filter)
+        print(f"\nResponse: {result['response']}")
+        print("Guardrail: foul_language")
+        print("Sources:  []")
+        print(f"Latency:  {result['latency']:.2f}s")
+        print(f"Tokens:   prompt={result['prompt_tokens']} · response={result['response_tokens']} · total={result['total_tokens']}\n")
+        return result["response"]
+
     retrieval_plan = plan_retrieval(query_text, k_override=k)
 
     if not force_rag and not dataset_filter:
@@ -234,6 +298,9 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
                     or None to search all datasets.
     """
     start_time      = time.perf_counter()
+    if contains_foul_language(query_text):
+        return foul_language_result(query_text, start_time, dataset_filter)
+
     history_text    = format_chat_history(chat_history)
     retrieval_query = build_retrieval_query(query_text, chat_history)
     retrieval_plan  = plan_retrieval(query_text, chat_history=chat_history)

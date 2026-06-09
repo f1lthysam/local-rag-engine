@@ -191,8 +191,14 @@ def health():
     return {"status": "ok", "service": "Alian Software RAG API"}
 
 
+from fastapi import Request as FastAPIRequest
+
 @app.post("/chat")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: FastAPIRequest):
+    # read api_key from query param if not in body
+    if not req.api_key:
+        req.api_key = request.query_params.get("api_key")
+
     question = (req.question or "").strip()
     if not question:
         raise HTTPException(status_code=400, detail="question must not be empty.")
@@ -271,13 +277,16 @@ def end_session(req: SessionEndRequest):
 
 
 @app.get("/history")
-def list_sessions():
+def list_sessions(api_key: Optional[str] = None):
     sessions: list[dict] = []
     seen: set[str] = set()
 
     for f in HISTORY_DIR.glob("chat_history_*.json"):
         try:
             d = json.loads(f.read_text("utf-8"))
+            # filter by api_key if provided
+            if api_key and d.get("api_key") != api_key:
+                continue
             sid = d["session_id"]
             seen.add(sid)
             sessions.append({
@@ -293,6 +302,8 @@ def list_sessions():
     for sid, d in ACTIVE_SESSIONS.items():
         if sid in seen or not d.get("messages"):
             continue
+        if api_key and d.get("api_key") != api_key:
+            continue
         sessions.append({
             "session_id": sid,
             "title": d.get("title", "Untitled Chat"),
@@ -304,7 +315,6 @@ def list_sessions():
 
     sessions.sort(key=lambda x: x.get("updated_at") or "", reverse=True)
     return {"sessions": sessions, "count": len(sessions)}
-
 
 @app.get("/history/{session_id}")
 def get_session(session_id: str):
@@ -320,16 +330,25 @@ def get_session(session_id: str):
     return session
 
 
-@app.delete("/history/{session_id}")
-def delete_session(session_id: str):
-    if not _safe_sid(session_id):
-        raise HTTPException(status_code=400, detail="Invalid session ID format.")
-    ACTIVE_SESSIONS.pop(session_id, None)
-    p = _path(session_id)
-    if not p.exists():
-        raise HTTPException(status_code=404, detail="Session not found.")
-    p.unlink()
-    return {"deleted": True, "session_id": session_id}
+@app.delete("/history")
+def delete_all_sessions(api_key: Optional[str] = None):
+    deleted = 0
+    for f in HISTORY_DIR.glob("chat_history_*.json"):
+        try:
+            d = json.loads(f.read_text("utf-8"))
+            if api_key and d.get("api_key") != api_key:
+                continue
+            f.unlink()
+            deleted += 1
+        except OSError:
+            continue
+    if api_key:
+        for sid in list(ACTIVE_SESSIONS.keys()):
+            if ACTIVE_SESSIONS[sid].get("api_key") == api_key:
+                ACTIVE_SESSIONS.pop(sid, None)
+    else:
+        ACTIVE_SESSIONS.clear()
+    return {"deleted": True, "deleted_count": deleted}
 
 
 @app.post("/history/{session_id}/delete")
@@ -357,8 +376,13 @@ def delete_all_sessions():
 
 
 @app.post("/new-session")
-def new_session():
-    return {"session_id": str(uuid.uuid4())}
+def new_session(api_key: Optional[str] = None):
+    sid = str(uuid.uuid4())
+    if api_key:
+        session = _new_session(sid)
+        session["api_key"] = api_key
+        ACTIVE_SESSIONS[sid] = session
+    return {"session_id": sid}
 
 
 app.mount("/widget", StaticFiles(directory="widget", html=True), name="widget")

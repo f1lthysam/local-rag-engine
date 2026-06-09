@@ -5,6 +5,20 @@
     "website": "https://acmeclothing.com",
     "api_key": "ak_XkT0fW-nif4LmBptsiBpjwqm-uRbC24v",
     "created_at": "2026-06-05T05:09:45Z",
-    "notes": "dummy1"
+    "notes": "dummy1",
+    "request_limit": 20,
+    "blocked": false,
+    "requests_used": 10
+  },
+  {
+    "id": "6950e6731add",
+    "name": "SOHAM CLOTHING",
+    "website": "https://sohamclothing",
+    "api_key": "ak_3eACSpQGAVWTNhZlbpP6OP7bl22nS3Mp",
+    "created_at": "2026-06-09T05:03:13Z",
+    "notes": "dummy2",
+    "request_limit": 20,
+    "requests_used": 9,
+    "blocked": false
   }
 ]

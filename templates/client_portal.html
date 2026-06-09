@@ -6,7 +6,9 @@
 <title>{{ company }} — Client Portal</title>
 <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
@@ -17,7 +19,7 @@
     --border2:      rgba(255,255,255,0.12);
     --text:         #f4ece0;
     --muted:        #b8aa9a;
-    --accent:       #ff8c26;
+    --accent:       #bbb7b3;
     --accent-soft:  rgba(255,140,38,0.14);
     --accent-glow:  rgba(255,140,38,0.3);
     --accent2:      #3ecf8e;
@@ -26,8 +28,8 @@
     --success:      #3ecf8e;
     --success-soft: rgba(62,207,142,0.12);
     --warn:         #f59e0b;
-    --sans:         'Inter', system-ui, sans-serif;
-    --mono:         'Courier New', monospace;
+    --sans: 'EB Garamond', Georgia, serif;
+    --mono: 'EB Garamond', Georgia, serif;
     --radius:       14px;
     --radius-sm:    8px;
   }
@@ -292,7 +294,7 @@
   .btn:active { transform: scale(0.97); }
 
   .btn-primary {
-    background: linear-gradient(135deg, #ff8c26, #ffb86b);
+    /* background: #c5c1be; */
     color: #0a0a0a;
     box-shadow: 0 4px 16px rgba(255,140,38,0.25);
   }
@@ -470,6 +472,20 @@
     font-size: 14px;
   }
   .empty-state .icon { font-size: 32px; margin-bottom: 12px; opacity: 0.4; }
+  html, body { font-size: 18px; }
+  * { font-size: inherit; }
+  html, body { font-size: 18px; }
+
+  .nav-item, .nav-label, .sidebar-logo-text, .sidebar-logo-sub,
+  .sidebar-footer, .logout-btn, .card-title, .stat-card .label,
+  .chart-card h3, thead th, tbody td, .form-group label,
+  .doc-name, .doc-meta, .upload-zone p, .toast, .badge,
+  .page-header p, .empty-state { font-size: 16px; }
+
+  .page-header h1 { font-size: 28px; }
+  .stat-card .value { font-size: 28px; }
+  input, textarea { font-size: 28px; }
+  .btn { font-size: 20px; }
 </style>
 </head>
 <body>

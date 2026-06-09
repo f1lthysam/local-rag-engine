@@ -521,14 +521,31 @@ def api_change_password():
 @client_portal_bp.route("/api/widget-code")
 @client_login_required
 def api_widget_code():
-    """Return the embed snippet for the client to paste into their website."""
-    base_url  = request.host_url.rstrip("/")
     tenant_id = _tenant()
+    company   = session.get("client_company", tenant_id)
+    
+    # find api_key from tenants.json by matching name or tenant slug
+    api_key = ""
+    try:
+        tenants = json.loads(Path("tenants.json").read_text("utf-8"))
+        for t in tenants:
+            name_slug = t.get("name", "").lower().replace(" ", "-")
+            if t.get("name", "").upper() == company.upper() or name_slug == tenant_id:
+                api_key = t.get("api_key", "")
+                break
+    except Exception:
+        pass
+
+    base_url = "http://localhost:8000"
     code = (
-        f'<script\n'
-        f'  src="{base_url}/widget/chatbot.js"\n'
-        f'  data-tenant="{tenant_id}"\n'
-        f'  data-api-key="YOUR_API_KEY">\n'
-        f'</script>'
+        f'<script>\n'
+        f'  window.RagChatConfig = {{\n'
+        f'    apiBase:       \'{base_url}\',\n'
+        f'    apiKey:        \'{api_key}\',\n'
+        f'    siteName:      \'{company}\',\n'
+        f'    assistantName: \'{company} Assistant\',\n'
+        f'  }};\n'
+        f'</script>\n'
+        f'<script src="{base_url}/widget/chatbot.js"></script>'
     )
     return jsonify({"code": code})

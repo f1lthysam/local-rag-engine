@@ -8,7 +8,7 @@
  *
  * Override defaults before the script tag:
  *   <script>
- *     window.AlianChatConfig = {
+ *      window.RagChatConfig = {
  *       apiBase: 'https://your-server.com',
  *       welcomeMessage: 'Custom welcome text',
  *     };
@@ -27,26 +27,26 @@
     ? new URL('.', _scriptEl.src).href
     : new URL('/widget/', window.location.origin).href;
 
-  /* ── Configuration (override via window.AlianChatConfig) ───────────────── */
-  const CFG = Object.assign(
+  /* ── Configuration (override via window.RagChatConfig) ───────────────── */
+const CFG = Object.assign(
     {
       apiBase:        'http://localhost:8000',
+      apiKey:         '',
+      tenant:         '',
       cssUrl:         _scriptBase + 'chatbot.css',
-      // siteName:       'Alian Software',
-      // assistantName:  'Alian Assistant',
-      // placeholder:    'Ask anything about Alian Software…',
-      // welcomeTitle:   'Hi, I\'m the Alian Assistant',
-      // welcomeMessage: 'Ask me about our services, technologies, pricing, or anything on the Alian Software website.',
+      siteName:       'RAG Studio',                              // default site name — override via window.RagChatConfig
+      assistantName:  'RAG Assistant',                           // default assistant name — override via window.RagChatConfig
+      placeholder:    'Ask me anything…',
+      welcomeTitle:   'Hi, I\'m your RAG Assistant',
+      welcomeMessage: 'Ask me anything from the knowledge base.',
       hints: [
-        'What services do you offer?',
+        'What services do you offer?',                           // change hints as needed per client
         'How can I get started?',
         'What technologies do you use?',
         'Tell me about your team',
       ],
-  
     },
-  
-  //   window.AlianChatConfig || {}
+    window.RagChatConfig || {}                                   // reads apiKey, tenant, siteName etc. from embed script
   );
 
 /* ── State ───────────────────────────────────────────────────────────────── */
@@ -76,7 +76,8 @@
       const base = document.createElement('style');
       base.setAttribute('data-rc-base-css', '1');
       base.textContent = `
-        #rc-root{position:relative;z-index:2147483647;font-family:var(--rc-font, system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI",sans-serif)}
+        #rc-root{position:relative;z-index:2147483647;font-family:var(--rc-font, system-ui, -apple-system, BlinkMacSystemFont,"Segoe UI",sans-serif);font-size:14px!important}
+        #rc-root *{font-size:inherit!important}
         #rc-root,#rc-root *{box-sizing:border-box}
         #chatbot-fab{position:fixed;right:28px;bottom:28px;width:56px;height:56px;border-radius:50%;border:1px solid rgba(24,34,17,.22);background:linear-gradient(145deg,#f1dfbb 0%,#ead8b2 100%);color:#182211;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(0,0,0,.45);cursor:pointer;z-index:2147483647;padding:0}
         #chatbot-fab svg{width:24px;height:24px;fill:currentColor}
@@ -89,8 +90,8 @@
         #chatbot-panel svg{width:18px;height:18px;fill:currentColor;flex:0 0 auto}
         #chatbot-panel button{font:inherit}
         #chatbot-panel .rc-sidebar{width:220px;min-width:220px;background:#dfc99d;border-right:1px solid #cbb688;display:flex;flex-direction:column}
-        #chatbot-panel .rc-sidebar-header{height:56px;display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid #cbb688}
-        #chatbot-panel .rc-sidebar-actions{display:flex;gap:6px;align-items:center;flex-shrink:0;flex-wrap:wrap;justify-content:flex-start}
+        #chatbot-panel .rc-sidebar-header{min-height:56px;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:12px;border-bottom:1px solid #cbb688;gap:8px}
+        #chatbot-panel .rc-sidebar-actions{display:flex;gap:6px;align-items:center;flex-wrap:nowrap;width:100%}
         #chatbot-panel .rc-new-chat-btn,#chatbot-panel .rc-clear-history-btn{display:inline-flex;align-items:center;border:1px solid #cbb688;background:#f1dfbb;color:#1a2012;border-radius:7px;cursor:pointer}
         #chatbot-panel .rc-new-chat-btn{gap:4px;padding:7px 9px}
         #chatbot-panel .rc-new-chat-btn svg{width:14px;height:14px}
@@ -346,7 +347,7 @@
   async function startNewChat() {
     await persistCurrentSession();
     try {
-      const res  = await apiFetch('/new-session', { method: 'POST' });
+      const res = await apiFetch('/new-session' + (CFG.apiKey ? '?api_key=' + CFG.apiKey : ''), { method: 'POST' });
       const data = await res.json();
       S.sessionId = data.session_id;
     } catch {
@@ -374,7 +375,7 @@
     if (!el) return;
 
     try {
-      const res = await apiFetch('/history');
+      const res = await apiFetch('/history' + (CFG.apiKey ? '?api_key=' + CFG.apiKey : ''));
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       S.sessions = normalizeSessions(data.sessions || []);
@@ -668,7 +669,7 @@
     await persistCurrentSession();
 
     try {
-      const res = await apiFetch('/history', { method: 'DELETE' });
+      const res = await apiFetch('/history' + (CFG.apiKey ? '?api_key=' + CFG.apiKey : ''), { method: 'DELETE' });
       if (!res.ok) {
         const errorText = await res.text().catch(() => '');
         throw new Error(errorText || `HTTP ${res.status}`);
@@ -686,7 +687,7 @@
         }
         // If still not cleared, attempt Flask fallback on :5000
         try {
-          const flaskBase = (window.AlianChatConfig?.flaskBase || 'http://localhost:5000').replace(/\/$/, '');
+          const flaskBase = (window.RagChatConfig?.flaskBase || 'http://localhost:5000').replace(/\/$/, '');
           await fetch(flaskBase + '/history/clear-all', { method: 'POST' });
         } catch (_) {}
       } catch (_) {}
@@ -771,15 +772,16 @@
   }
 
   function apiFetch(path, opts = {}) {
-    const url = CFG.apiBase.replace(/\/$/, '') + path;
-    const headers = Object.assign(
-      {
-        Accept: 'application/json',
-        'ngrok-skip-browser-warning': 'true',
-      },
-      opts.headers || {}
-    );
-    return fetch(url, Object.assign({}, opts, { headers }));
+      const sep = path.includes('?') ? '&' : '?';
+      const url = CFG.apiBase.replace(/\/$/, '') + path + (CFG.apiKey ? `${sep}api_key=${CFG.apiKey}` : '');
+      const headers = Object.assign(
+        {
+          Accept: 'application/json',
+          'ngrok-skip-browser-warning': 'true',
+        },
+        opts.headers || {}
+      );
+      return fetch(url, Object.assign({}, opts, { headers }));
   }
 
   function escHtml(str) {

@@ -177,10 +177,22 @@ def api_create_tenant():
 @app.route("/api/tenants/<tenant_id>", methods=["DELETE"])
 def api_delete_tenant(tenant_id):
     tenants = load_tenants()
-    updated = [t for t in tenants if t["id"] != tenant_id]
-    if len(updated) == len(tenants):
+    deleted_tenant = next((t for t in tenants if t["id"] == tenant_id), None)
+    if not deleted_tenant:
         return jsonify({"error": "not found"}), 404
+    updated = [t for t in tenants if t["id"] != tenant_id]
     save_tenants(updated)
+    try:
+        from client_auth import get_db
+        tenant_name = deleted_tenant.get("name", "")
+        with get_db() as conn:
+            conn.execute(
+                "DELETE FROM clients WHERE company_name = ?",
+                (tenant_name,)
+            )
+            conn.commit()
+    except Exception as e:
+        print(f"[app.py] Could not delete client account: {e}")
     return jsonify({"deleted": True})
 
 @app.route("/api/tenants/<tenant_id>/regenerate-key", methods=["POST"])

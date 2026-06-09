@@ -291,7 +291,7 @@ def query_rag(
     return response_text
 
 
-def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None):
+def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None, collection_name: str = None):
     """
     Main web-facing query function.
     dataset_filter: bare filename like 'aliansoftware.com-en.md'
@@ -330,7 +330,7 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
                 "dataset_filter":  None,
             }
 
-    db      = get_vector_db()
+    db = get_vector_db(collection_name=collection_name)
     results = similarity_search_filtered(db, retrieval_query, retrieval_plan["k"], dataset_filter)
 
     if not results or results[0][1] > THRESHOLD:
@@ -724,13 +724,21 @@ def run_interactive(k, debug, no_llm, force_rag):
 
 # ── DB / model singletons ─────────────────────────────────────────────────────
 
-def get_vector_db():
+def get_vector_db(collection_name: str = None):
+    from langchain_chroma import Chroma
+    from get_embedding_function import get_embedding_function
+    if collection_name:
+        return Chroma(
+            persist_directory=CHROMA_PATH,
+            embedding_function=get_embedding_function(),
+            collection_name=collection_name,
+        )
     global _DB
     if _DB is None:
-        from langchain_chroma import Chroma
-        from get_embedding_function import get_embedding_function
-        _DB = Chroma(persist_directory=CHROMA_PATH,
-                     embedding_function=get_embedding_function())
+        _DB = Chroma(
+            persist_directory=CHROMA_PATH,
+            embedding_function=get_embedding_function(),
+        )
     return _DB
 
 

@@ -1,0 +1,37 @@
+{
+  "session_id": "64099f3c-6ab9-4089-89ab-598a4270b5a8",
+  "source": "widget",
+  "created_at": "2026-06-09T11:12:22Z",
+  "updated_at": "2026-06-09T11:17:13Z",
+  "title": "What services do you offer?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What services do you offer?",
+      "timestamp": "2026-06-09T11:12:23Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Alian AI offers the following services:\n\n*   AI agents\n*   Custom chatbots\n*   AI automation\n*   Predictive ML\n*   Computer vision\n*   LLM applications\n*   RAG (Retrieval-Augmented Generation)",
+      "timestamp": "2026-06-09T11:12:25Z"
+    },
+    {
+      "role": "user",
+      "content": "hello",
+      "timestamp": "2026-06-09T11:17:09Z"
+    }
+  ],
+  "turns": [
+    {
+      "query": "What services do you offer?",
+      "response": "Alian AI offers the following services:\n\n*   AI agents\n*   Custom chatbots\n*   AI automation\n*   Predictive ML\n*   Computer vision\n*   LLM applications\n*   RAG (Retrieval-Augmented Generation)",
+      "timestamp": "2026-06-09T11:12:25Z",
+      "prompt_tokens": 2034,
+      "response_tokens": 53,
+      "total_tokens": 2087,
+      "latency": 2.26
+    }
+  ],
+  "api_key": "ak_KKIsXcn0M5Mi5KjFrGPPA_q6zy0kMl6J",
+  "ended_at": "2026-06-09T11:17:13Z"
+}

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://unpkg.com/lucide@latest"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{{ company }} — Client Portal</title>
@@ -486,8 +487,12 @@
   .stat-card .value { font-size: 28px; }
   input, textarea { font-size: 28px; }
   .btn { font-size: 20px; }
+
+  .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
 </style>
 </head>
+<script>lucide.createIcons(); </script>
+ 
 <body>
 
 <!-- ── Sidebar ── -->
@@ -501,26 +506,26 @@
   </div>
 
   <div class="nav-label">Main</div>
-  <nav>
-    <div class="nav-item active" onclick="switchTab('overview')">
-      <span class="icon">📊</span> Overview
-    </div>
-    <div class="nav-item" onclick="switchTab('analytics')">
-      <span class="icon">📈</span> Analytics
-    </div>
-    <div class="nav-item" onclick="switchTab('history')">
-      <span class="icon">💬</span> Chat History
-    </div>
-    <div class="nav-item" onclick="switchTab('documents')">
+<nav>
+  <div class="nav-item active" onclick="switchTab('overview')">
+    <i data-lucide="layout-dashboard" width="16" height="16"></i> Overview
+  </div>
+  <div class="nav-item" onclick="switchTab('analytics')">
+    <i data-lucide="bar-chart-2" width="16" height="16"></i> Analytics
+  </div>
+  <div class="nav-item" onclick="switchTab('history')">
+    <i data-lucide="message-square" width="16" height="16"></i> Chat History
+  </div>
+  <div class="nav-item" onclick="switchTab('settings')">
+    <i data-lucide="settings" width="16" height="16"></i> Settings
+  </div>
+</nav>
+    <!-- <div class="nav-item" onclick="switchTab('documents')">
       <span class="icon">📄</span> Documents
     </div>
     <div class="nav-item" onclick="switchTab('scraper')">
       <span class="icon">🕷️</span> Web Scraper
-    </div>
-    <div class="nav-item" onclick="switchTab('settings')">
-      <span class="icon">⚙️</span> Settings
-    </div>
-  </nav>
+    </div> -->
 
   <div class="sidebar-footer">
     <strong>{{ company }}</strong>
@@ -535,7 +540,7 @@
   <!-- ── Overview ── -->
   <section class="tab-section active" id="tab-overview">
     <div class="page-header">
-      <h1>Welcome back 👋</h1>
+      <h1>Welcome</h1>
       <p>Here's a snapshot of your chatbot's activity.</p>
     </div>
 
@@ -914,6 +919,7 @@ function formatTs(ts) {
 
 // ── Init ──────────────────────────────────────────────────────────────────────
 loadAnalytics();
+lucide.createIcons();
 </script>
 </body>
 </html>

@@ -34,6 +34,11 @@ from usage_analytics import record_session_event
 
 import json
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+load_dotenv()
+
+ADMIN_API_KEY = os.getenv("ADMIN_API_KEY", "admin_oaHHpo_leC9Kr5p_I5DCjdLJ-HTLf-pAQBR3U0RQD1Y")
 
 TENANTS_FILE = Path("tenants.json")
 
@@ -53,6 +58,8 @@ def _check_and_increment(api_key: str) -> dict:
     Returns {"allowed": True} or {"allowed": False, "reason": "..."}
     Also increments requests_used if allowed.
     """
+    if api_key == ADMIN_API_KEY:
+        return {"allowed": True}
     tenants = _load_tenants()
     for t in tenants:
         if t.get("api_key") == api_key:
@@ -68,8 +75,17 @@ def _check_and_increment(api_key: str) -> dict:
             _save_tenants(tenants)
             return {"allowed": True}
     # no matching tenant — still allow (widget may not pass api_key in all setups)
-    return {"allowed": True}
+    return {"allowed": False, "reason": "Your chatbot access has been revoked. Please contact support."}
 
+def _get_collection_name(api_key: str) -> str | None:
+    if not api_key:
+        return None
+    tenants = _load_tenants()
+    for t in tenants:
+        if t.get("api_key") == api_key:
+            name = t.get("name", "")
+            return name.lower().replace(" ", "-")
+    return None
 
 app = FastAPI(
     title="Alian Software RAG Chatbot API",
@@ -230,7 +246,8 @@ async def chat(req: ChatRequest, request: FastAPIRequest):
             return {"answer": limit_check["reason"], "session_id": sid, "title": session["title"]}
 
     try:
-        raw = query_rag_web(question, chat_history=chat_history)
+        collection_name = _get_collection_name(session.get("api_key") or stored_key)
+        raw = query_rag_web(question, chat_history=chat_history, collection_name=collection_name)
         answer = _extract_answer(raw)
     except Exception as exc:
         print(f"[api.py] RAG error: {exc}")
@@ -362,17 +379,30 @@ def delete_session_post(session_id: str):
     return {"deleted": True, "session_id": session_id}
 
 
-@app.delete("/history")
-def delete_all_sessions():
-    ACTIVE_SESSIONS.clear()
-    deleted = 0
-    for f in HISTORY_DIR.glob("chat_history_*.json"):
-        try:
-            f.unlink()
-            deleted += 1
-        except OSError:
-            continue
-    return {"deleted": True, "deleted_count": deleted}
+
+@app.delete("/history/{session_id}")
+def delete_session(session_id: str):
+    if not _safe_sid(session_id):
+        raise HTTPException(status_code=400, detail="Invalid session ID format.")
+    ACTIVE_SESSIONS.pop(session_id, None)
+    p = _path(session_id)
+    if not p.exists():
+        raise HTTPException(status_code=404, detail="Session not found.")
+    p.unlink()
+    return {"deleted": True, "session_id": session_id}
+
+
+# @app.delete("/history")
+# def delete_all_sessions():
+#     ACTIVE_SESSIONS.clear()
+#     deleted = 0
+#     for f in HISTORY_DIR.glob("chat_history_*.json"):
+#         try:
+#             f.unlink()
+#             deleted += 1
+#         except OSError:
+#             continue
+#     return {"deleted": True, "deleted_count": deleted}
 
 
 @app.post("/new-session")

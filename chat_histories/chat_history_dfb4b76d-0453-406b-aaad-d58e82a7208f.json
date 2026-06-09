@@ -1,0 +1,17 @@
+{
+  "session_id": "dfb4b76d-0453-406b-aaad-d58e82a7208f",
+  "source": "widget",
+  "created_at": "2026-06-09T11:31:59Z",
+  "updated_at": "2026-06-09T11:34:21Z",
+  "title": "What services do you offer?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What services do you offer?",
+      "timestamp": "2026-06-09T11:32:00Z"
+    }
+  ],
+  "turns": [],
+  "api_key": "admin_oaHHpo_leC9Kr5p_I5DCjdLJ-HTLf-pAQBR3U0RQD1Y",
+  "ended_at": "2026-06-09T11:34:21Z"
+}

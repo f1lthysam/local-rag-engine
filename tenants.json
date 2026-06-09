@@ -1,24 +1,13 @@
 [
   {
-    "id": "29ce3afb8c29",
-    "name": "Acme Clothing Store",
-    "website": "https://acmeclothing.com",
-    "api_key": "ak_XkT0fW-nif4LmBptsiBpjwqm-uRbC24v",
-    "created_at": "2026-06-05T05:09:45Z",
-    "notes": "dummy1",
+    "id": "4469e83b30f2",
+    "name": "Soham Pvt Ltd",
+    "website": "https://sohamsoftware.com",
+    "api_key": "ak_EPiNqU-oEIRDossgqmjWVdkNCoBNKfso",
+    "created_at": "2026-06-09T11:51:58Z",
+    "notes": "dummy3",
     "request_limit": 20,
-    "blocked": false,
-    "requests_used": 10
-  },
-  {
-    "id": "6950e6731add",
-    "name": "SOHAM CLOTHING",
-    "website": "https://sohamclothing",
-    "api_key": "ak_3eACSpQGAVWTNhZlbpP6OP7bl22nS3Mp",
-    "created_at": "2026-06-09T05:03:13Z",
-    "notes": "dummy2",
-    "request_limit": 20,
-    "requests_used": 9,
+    "requests_used": 0,
     "blocked": false
   }
 ]

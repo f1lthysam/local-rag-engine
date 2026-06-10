@@ -1,27 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="https://unpkg.com/lucide@latest"></script>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>RAG Studio</title>
-  <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #050507;
-      --surface: #111214;
-      --surface2: #1b1a20;
-      --border: rgba(255,255,255,0.08);
-      --border2: rgba(255,255,255,0.1);
-      --separator: rgba(255,255,255,0.08);
-      --text: #f4ece0;
-      --muted: #b8aa9a;
-      --accent: #bdbbba;
-      --danger: #c0392b;
-      --success: #27ae60;
-      --mono: 'EB Garamond', Georgia, serif;
-      --sans: 'EB Garamond', Georgia, serif;
+      --bg: #1b1b1f;
+      --surface: #232327;
+      --surface2: #2a2a2f;
+      --border: rgba(255,255,255,0.06);
+      --border2: rgba(255,255,255,0.09);
+      --separator: rgba(255,255,255,0.06);
+      --text: #e8e8ea;
+      --muted: #8b8b96;
+      --accent: #e8e8ea;
+      --danger: #e05555;
+      --success: #3ecf8e;
+      --mono: 'Inter', system-ui, sans-serif;
+      --sans: 'Inter', system-ui, sans-serif;
     }
 
     body { font-family: var(--sans); }
@@ -33,20 +34,11 @@
       background: var(--bg);
       color: var(--text);
       font-family: var(--sans);
-      font-size: 22px;
+      font-size: 15px;
       line-height: 1.55;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
       text-rendering: optimizeLegibility;
-    }
-
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at 20% 20%, rgba(255,140,38,0.08), transparent 16%),
-                  radial-gradient(circle at 80% 18%, rgba(255,140,38,0.05), transparent 14%);
-      pointer-events: none;
     }
 
     /* ── Top nav ── */
@@ -118,7 +110,7 @@
       flex-direction: column;
       gap: 18px;
       overflow-y: auto;
-      background: rgba(12,12,13,0.94);
+      background: #1e1e22;
     }
     .sidebar::-webkit-scrollbar { width: 4px; }
     .sidebar::-webkit-scrollbar-track { background: transparent; }
@@ -157,9 +149,9 @@
 
     .scrape-btn {
       width: 100%;
-      /* background: linear-gradient(135deg, #ff8c26 0%, #ffb86b 100%); */
-      color: #0a0a0a;
-      border: none;
+      background: rgba(255,255,255,0.08);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 14px;
       font-family: var(--mono);
       font-size: 14px;
@@ -168,7 +160,7 @@
       text-transform: uppercase;
       padding: 11px 0;
       cursor: pointer;
-      margin-top: 9px;
+      margin-top: 5px;
       transition: opacity 0.15s;
     }
     .scrape-btn:hover { opacity: 0.88; transform: translateY(-1px); }
@@ -239,20 +231,20 @@
       word-break: break-all; line-height: 1.4; position: relative;
     }
     .dataset-item:hover {
-      border-color: rgba(255,140,38,0.45);
-      background: rgba(255,140,38,0.08);
+      border-color: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.04);
       color: var(--text);
       transform: translateY(-1px);
     }
     .dataset-item.active {
-      border-color: rgba(255,140,38,0.45);
-      background: rgba(255,140,38,0.1);
-      color: var(--accent);
+      border-color: rgba(255,255,255,0.2);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
     }
     .dataset-item.active::before {
       content: '';
       position: absolute; left: 0; top: 0; bottom: 0;
-      width: 3px; background: var(--accent);
+      width: 3px; background: var(--text);
       border-radius: 5px 0 0 5px;
     }
     .dataset-file-icon { flex-shrink: 0; opacity: 0.45; transition: opacity 0.15s; }
@@ -261,14 +253,14 @@
     .dataset-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; letter-spacing: 0.02em; }
     .dataset-active-badge {
       font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
-      background: rgba(255,136,0,0.15); color: var(--accent);
+      background: rgba(255,255,255,0.08); color: var(--text);
       padding: 4px 10px; border-radius: 999px; flex-shrink: 0;
     }
     .dataset-active-bar {
       padding: 8px 11px; border-radius: 8px;
-      border: 1px solid rgba(255,136,0,0.3);
-      background: rgba(255,136,0,0.06);
-      font-family: var(--mono); font-size: 12px; color: var(--accent);
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      font-family: var(--mono); font-size: 12px; color: var(--text);
       display: flex; align-items: center; gap: 8px;
     }
     .dataset-active-bar span { flex: 1; word-break: break-all; }
@@ -287,12 +279,7 @@
       border-bottom: 1px solid var(--border);
       position: relative; overflow: hidden;
     }
-    .chat-header::after {
-      content: ''; position: absolute;
-      right: -40px; top: -30px; width: 180px; height: 180px;
-      background: radial-gradient(circle, rgba(255,140,38,0.12), transparent 55%);
-      pointer-events: none;
-    }
+
     .brand-title { display: flex; align-items: center; gap: 16px; }
     .chat-header h1 {
       font-family: var(--mono); font-size: 20px; letter-spacing: 0.12em;
@@ -316,8 +303,8 @@
       padding: 24px 30px; display: flex; flex-direction: column;
       gap: 18px; min-height: 0;
       background-image: radial-gradient(circle, rgba(255,255,255,0.055) 1px, transparent 1px);
-      background-size: 28px 28px;
-      background-color: rgba(12,12,13,0.94);
+      background-size: 15px 15px;
+      background-color: #1e1e22;
     }
     .chat-messages::-webkit-scrollbar { width: 4px; }
     .chat-messages::-webkit-scrollbar-track { background: transparent; }
@@ -331,14 +318,14 @@
     .msg-label { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
 
     .msg-bubble {
-      padding: 14px 18px; border-radius: 14px; font-size: 17px; line-height: 1.6;
+      padding: 14px 18px; border-radius: 14px; font-size: 15px; line-height: 1.6;
       white-space: pre-wrap;
       box-shadow: 0 8px 24px rgba(0,0,0,0.2);
       transition: transform 0.18s ease;
     }
     .msg-bubble:hover { transform: translateY(-1px); }
     .msg.user .msg-bubble      { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); color: var(--text); }
-    .msg.assistant .msg-bubble { background: linear-gradient(180deg,#141416,#1b161f); border: 1px solid rgba(255,140,38,0.3); color: var(--text); }
+    .msg.assistant .msg-bubble { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--text); }
     .msg.assistant.no-info .msg-bubble { border-left: 3px solid var(--danger); color: var(--muted); font-family: var(--mono); font-size: 16px; }
 
     .msg.assistant.loading { width: fit-content; max-width: 94%; }
@@ -376,15 +363,12 @@
     .empty-state-ring {
       width: 90px; height: 90px;
       border-radius: 50%;
-      border: 1px solid rgba(255,140,38,0.18);
+      border: 1px solid rgba(255,255,255,0.1);
       display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 0 14px rgba(255,140,38,0.04), 0 0 0 28px rgba(255,140,38,0.02);
       margin-bottom: 6px;
     }
     .empty-state .big {
-      font-size: 38px; color: rgba(255,140,38,0.7);
-      filter: drop-shadow(0 0 14px rgba(255,140,38,0.3));
-      animation: glowPulse 3s ease-in-out infinite;
+      font-size: 38px; color: rgba(255,255,255,0.4);
       line-height: 1;
     }
     @keyframes glowPulse {
@@ -399,7 +383,7 @@
       border-right: 1px solid var(--separator);
       padding: 16px 28px;
       display: flex; align-items: flex-end; gap: 10px;
-      background: rgba(18,18,20,0.96);
+      background: #1e1e22;
     }
     .upload-form { flex: 0 0 auto; }
     .upload-input { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
@@ -425,15 +409,14 @@
       transition: border-color 0.15s, box-shadow 0.15s;
     }
     .input-wrap textarea::placeholder { color: var(--muted); }
-    .input-wrap textarea:focus { border-color: rgba(255,140,38,0.6); box-shadow: 0 0 0 4px rgba(255,140,38,0.08); }
+    .input-wrap textarea:focus { border-color: rgba(255,255,255,0.2); box-shadow: 0 0 0 3px rgba(255,255,255,0.05); }
 
     .send-btn {
       position: absolute; right: 10px; bottom: 10px;
       width: 38px; height: 38px;
-      background: linear-gradient(135deg, #ff8c26, #ffb86b);
+      background: #fff;
       border: none; border-radius: 12px;
       cursor: pointer; display: flex; align-items: center; justify-content: center;
-      box-shadow: 0 0 18px rgba(255,140,38,0.25);
       transition: opacity 0.15s;
     }
     .send-btn:hover { opacity: 0.88; }
@@ -444,7 +427,7 @@
     .stats-panel {
       grid-column: 3; grid-row: 1 / 4;
       padding: 22px; display: flex; flex-direction: column; gap: 18px; overflow-y: auto;
-      background: rgba(12,12,13,0.96);
+      background: #1e1e22;
       border-left: 1px solid rgba(255,255,255,0.08);
     }
     .stats-panel::-webkit-scrollbar { width: 4px; }
@@ -458,7 +441,7 @@
     .stat-value  { font-family: var(--mono); font-size: 24px; font-weight: 500; color: var(--text); }
 
     .conf-bar-track { height: 6px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; margin-top: 4px; }
-    .conf-bar-fill  { height: 100%; border-radius: 2px; background: linear-gradient(90deg, rgba(255,140,38,0.94), rgba(255,185,105,0.94)); transition: width 0.4s ease; }
+    .conf-bar-fill { height: 100%; border-radius: 2px; background: #fff; transition: width 0.4s ease; }
 
     .token-row {
       display: flex; justify-content: space-between;
@@ -468,7 +451,7 @@
     .token-row:last-child { border-bottom: none; }
     .token-row span { color: var(--text); font-weight: 500; }
 
-    .source-item { font-family: var(--mono); font-size: 13px; color: var(--muted); padding: 12px 14px; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,140,38,0.35); border-radius: 12px; word-break: break-all; line-height: 1.4; }
+    .source-item { font-family: var(--mono); font-size: 13px; color: var(--muted); padding: 12px 14px; background: rgba(255,255,255,0.02); border-left: 2px solid rgba(255,255,255,0.15); border-radius: 12px; word-break: break-all; line-height: 1.4; }
 
     .stats-divider { border: none; border-top: 1px solid var(--border); }
 
@@ -494,8 +477,8 @@
 
     .stat-filter-badge {
       display: inline-block; padding: 3px 8px; border-radius: 999px;
-      border: 1px solid rgba(255,136,0,0.35); background: rgba(255,136,0,0.08);
-      font-family: var(--mono); font-size: 12px; color: var(--accent); word-break: break-all;
+      border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06);
+      font-family: var(--mono); font-size: 12px; color: var(--text); word-break: break-all;
     }
 
     /* ── Modal ── */
@@ -543,7 +526,7 @@
       .input-bar { grid-row: 3; border-right: none; padding: 20px 22px; }
       .chat-header, .chat-messages { padding-left: 22px; padding-right: 22px; }
     }
-      .sidebar-title, .sidebar-desc, .notice, .scrape-btn, .clear-chat-btn,
+      /* .sidebar-title, .sidebar-desc, .notice, .scrape-btn, .clear-chat-btn,
       .model-tag, .dataset-item, .msg-label, .loading-copy, .empty-state,
       .stats-title, .stat-label, .token-row, .source-item, .stats-empty-card,
       .chat-dataset-badge, .stat-filter-badge, .modal-btn, .field-label,
@@ -551,7 +534,7 @@
 
       .msg-bubble { font-size: 20px; }
       .stat-value { font-size: 28px; }
-      .input-wrap textarea { font-size: 20px; }
+      .input-wrap textarea { font-size: 20px; } */
   </style>
 </head>
 <body>
@@ -577,7 +560,10 @@
       <div class="sidebar-desc">Scrapes &amp; indexes into ChromaDB</div>
       <form method="POST" action="/ingest-url">
         <input type="url" name="url" placeholder="https://example.com" value="{{ url or '' }}"/>
-        <button type="submit" class="scrape-btn">⊕ &nbsp;Scrape &amp; Index</button>
+        <button type="submit" class="scrape-btn">
+          <i data-lucide="globe" style="width:14px;height:14px;vertical-align:middle;margin-right:6px;"></i>
+          Scrape & Index
+        </button>
       </form>
     </div>
 
@@ -1060,6 +1046,7 @@ document.getElementById('prompt-modal').addEventListener('click', function(e) {
   if (e.target === this) closePromptModal();
 });
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closePromptModal(); });
+lucide.createIcons()
 </script>
 </body>
 </html>

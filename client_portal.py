@@ -45,6 +45,7 @@ from client_auth import (
     register_client, resend_verification,
     verify_client_email,
 )
+import query_data
 
 # ── Blueprint ─────────────────────────────────────────────────────────────────
 
@@ -357,16 +358,23 @@ def api_upload_document():
 
     filename = secure_filename(file.filename)
     save_path = _tenant_data_dir() / filename
-    file.save(save_path)
+    from app import save_upload_as_markdown
+    md_path = save_upload_as_markdown(file, filename, str(_tenant_data_dir()))
+    print(f"[DEBUG] tenant={_tenant()} path={save_path}")
 
     # Ingest into ChromaDB for this tenant
     try:
         from populate_database import load_documents, split_documents, add_to_chroma
+        import query_data
+        query_data._DB = None
         docs   = load_documents(str(_tenant_data_dir()))
         chunks = split_documents(docs)
         add_to_chroma(chunks, collection_name=_tenant())
+        import query_data
+        query_data._DB = None
     except Exception as e:
-        return jsonify({"ok": False, "error": f"Saved but ingestion failed: {e}"}), 500
+        import traceback
+        return jsonify({"ok": False, "error": f"Saved but ingestion failed: {traceback.format_exc()}"}), 500
 
     return jsonify({"ok": True, "filename": filename})
 
@@ -386,6 +394,8 @@ def api_delete_document(filename: str):
     # Re-ingest remaining documents to rebuild the collection
     try:
         from populate_database import load_documents, split_documents, add_to_chroma
+        import query_data
+        query_data._DB = None
         import chromadb
         client = chromadb.PersistentClient(path="chroma")
         try:
@@ -397,6 +407,8 @@ def api_delete_document(filename: str):
             docs   = load_documents(str(_tenant_data_dir()))
             chunks = split_documents(docs)
             add_to_chroma(chunks, collection_name=_tenant())
+            import query_data
+            query_data._DB = None
     except Exception as e:
         return jsonify({"ok": False, "error": f"Deleted but re-ingestion failed: {e}"}), 500
 
@@ -456,6 +468,8 @@ def api_scrape():
             docs   = load_documents(str(_tenant_data_dir()))
             chunks = split_documents(docs)
             add_to_chroma(chunks, collection_name=tenant_id)
+            import query_data
+            query_data._DB = None
 
         except Exception as e:
             with _SCRAPE_LOCK:

@@ -71,11 +71,13 @@ def record_query_event(
     query: str,
     result: dict[str, Any] | None,
     dataset: str | None = None,
+    tenant_id: str | None = None,
 ) -> None:
     """Append one RAG request summary to analytics/session_events.jsonl."""
     try:
         result = result or {}
         event = {
+            "tenant_id": tenant_id,
             "event": "query_completed",
             "recorded_at": _utcnow(),
             "source": source,

@@ -287,7 +287,7 @@ const CFG = Object.assign(
         !(fab && fab.contains(e.target)) &&
         !(root && root.contains(e.target))
       ) {
-        closePanel();
+        // if (!S.busy) closePanel();
       }
     });
 
@@ -317,8 +317,9 @@ const CFG = Object.assign(
     setTimeout(() => document.getElementById('rc-input')?.focus(), 280);
   }
 
-  function closePanel() {
-    persistCurrentSession();
+    function closePanel() {
+      if (S.busy) return;
+      persistCurrentSession();
     S.open = false;
     const fab   = document.getElementById('chatbot-fab');
     const panel = document.getElementById('chatbot-panel');

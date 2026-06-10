@@ -1,1 +1,26 @@
-[]
+[
+  {
+    "id": "a0c737dd3107",
+    "name": "SOHAM CLOTHING",
+    "website": "http://127.0.0.1:3000/templates/soham_clothing.html?vscode-livepreview=true",
+    "api_key": "ak_u9Z9P8gzphJ1Sff6UOAigMyg8jMUsajv",
+    "created_at": "2026-06-10T06:10:07Z",
+    "notes": "DUMM4",
+    "request_limit": 20,
+    "requests_used": 7,
+    "blocked": false,
+    "tenant_id": "soham-clothing2"
+  },
+  {
+    "tenant_id": "alian-ai",
+    "id": "a942a336355c",
+    "name": "Alian AI",
+    "website": "https://aliansoftware.com/",
+    "api_key": "ak_WZ8QBzhSJVuIDdaXtKY7d5o1rxMuxU98",
+    "created_at": "2026-06-10T11:36:32Z",
+    "notes": "dummy5",
+    "request_limit": 20,
+    "requests_used": 3,
+    "blocked": false
+  }
+]

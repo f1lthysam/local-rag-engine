@@ -483,8 +483,8 @@ def _no_info_result(retrieval_query: str, retrieval_plan: dict,
 
 # ── Lexical fallback ──────────────────────────────────────────────────────────
 
-def answer_from_lexical_fallback(query_text: str, history_text: str, start_time):
-    context_text, sources = build_lexical_context(query_text)
+def answer_from_lexical_fallback(query_text: str, history_text: str, start_time, data_path: str = DATA_PATH):
+    context_text, sources = build_lexical_context(query_text, data_path)
     if not context_text:
         return None
 
@@ -521,11 +521,10 @@ def answer_from_lexical_fallback(query_text: str, history_text: str, start_time)
     }
 
 
-def build_lexical_context(query_text: str):
+def build_lexical_context(query_text: str, data_path: str = DATA_PATH):
     query_terms = extract_search_terms(query_text)
     if not query_terms:
         return "", []
-
     matches = []
     for path in Path(DATA_PATH).glob("*.md"):
         lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()

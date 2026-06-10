@@ -27,21 +27,36 @@ DATA_PATH = "data"
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--reset", action="store_true", help="Reset the database.")
+    parser.add_argument("--reset", action="store_true")
+    parser.add_argument("--tenant", type=str, default=None)
     args = parser.parse_args()
+
+    if args.tenant:
+        data_path       = f"data/tenant_{args.tenant}"
+        collection_name = f"tenant_{args.tenant}"
+    else:
+        data_path       = DATA_PATH
+        collection_name = "default"
+
     if args.reset:
-        print("Clearing database")
-        clear_database()
+        print(f"Clearing collection: {collection_name}")
+        import chromadb
+        client = chromadb.PersistentClient(path=CHROMA_PATH)
+        try:
+            client.delete_collection(collection_name)
+            print("Done.")
+        except Exception:
+            print("Collection not found, skipping.")
 
-    documents = load_documents()
-    chunks = split_documents(documents)
-    add_to_chroma(chunks)
+    documents = load_documents(data_path)
+    chunks    = split_documents(documents)
+    add_to_chroma(chunks, collection_name=collection_name)
 
 
-def load_documents():
-    pdf_loader = PyPDFDirectoryLoader(DATA_PATH)
+def load_documents(data_path: str = DATA_PATH):
+    pdf_loader = PyPDFDirectoryLoader(data_path)
     markdown_loader = DirectoryLoader(
-        DATA_PATH,
+        data_path,
         glob="*.md",
         loader_cls=TextLoader,
         loader_kwargs={"encoding": "utf-8"},
@@ -59,9 +74,11 @@ def split_documents(documents: list[Document]):
     return text_splitter.split_documents(documents)
 
 
-def add_to_chroma(chunks: list[Document]):
+def add_to_chroma(chunks: list[Document], collection_name: str = "default"):
     db = Chroma(
-        persist_directory=CHROMA_PATH, embedding_function=get_embedding_function()
+        persist_directory=CHROMA_PATH,
+        embedding_function=get_embedding_function(),
+        collection_name=collection_name,
     )
 
     chunks_with_ids = calculate_chunk_ids(chunks)

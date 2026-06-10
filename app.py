@@ -147,18 +147,28 @@ def get_chat_history():
     return CHAT_SESSIONS.setdefault(get_session_id(), [])
 
 def append_chat_turn(query, result):
+    record_query_event(
+    source="studio",
+    session_id=get_session_id(),
+    query=query,
+    result=result,
+    tenant_id=get_active_tenant_id(),
+)
     history = get_chat_history()
     history.append({"query": query, "result": result})
     del history[:-MAX_CHAT_TURNS]
 
-def get_available_datasets():
-    data_dir = Path(DATA_PATH)
+def get_available_datasets(tenant_id=None):
+    data_dir = Path(f"data/{tenant_id}") if tenant_id else Path(DATA_PATH)
     if not data_dir.exists():
         return []
     return sorted([f.name for f in data_dir.glob("*.md")])
 
 def get_selected_dataset():
     return session.get("selected_dataset", None)
+
+def get_active_tenant_id():
+    return session.get("active_tenant_id", None)
 
 # ── Dashboard ──────────────────────────────────────────────────────────────────
 @app.route("/")
@@ -183,6 +193,7 @@ def api_create_tenant():
     if not name:
         return jsonify({"error": "name is required"}), 400
     tenant = {
+        "tenant_id": name.lower().replace(" ", "-"),
         "id":            uuid4().hex[:12],
         "name":          name,
         "website":       website,
@@ -340,18 +351,15 @@ def studio():
         query    = request.form.get("query", "").strip()
         selected = get_selected_dataset()
         if query:
-            result = query_data.query_rag_web(query, chat_history=chat_history, dataset_filter=selected)
-            append_chat_turn(query, result)
-            record_query_event(
-                source="studio",
-                session_id=get_session_id(),
-                query=query,
-                result=result,
-                dataset=selected,
+            result = query_data.query_rag_web(
+                query,
+                chat_history=chat_history,
+                dataset_filter=selected,
+                collection_name=f"tenant_{get_active_tenant_id()}" if get_active_tenant_id() else None,
             )
     return render_template("studio.html", result=result, query=query,
         chat_history=chat_history, ingest=ingest, url="", model=MODEL_NAME,
-        datasets=get_available_datasets(), selected_dataset=get_selected_dataset())
+        datasets=get_available_datasets(get_active_tenant_id()), selected_dataset=get_selected_dataset())
 
 @app.route("/select-dataset", methods=["POST"])
 def select_dataset():
@@ -361,6 +369,17 @@ def select_dataset():
         session.pop("selected_dataset", None)
     else:
         session["selected_dataset"] = chosen
+    CHAT_SESSIONS[get_session_id()] = []
+    return redirect(url_for("studio"))
+
+@app.route("/select-tenant", methods=["POST"])
+def select_tenant():
+    tenant_id = request.form.get("tenant_id", "").strip()
+    if find_tenant(tenant_id):
+        session["active_tenant_id"] = tenant_id
+    else:
+        session.pop("active_tenant_id", None)
+    session.pop("selected_dataset", None)
     CHAT_SESSIONS[get_session_id()] = []
     return redirect(url_for("studio"))
 
@@ -378,12 +397,15 @@ def ingest_url():
     url    = request.form.get("url", "").strip()
     ingest = None
     try:
-        validate_url(url)
+        tenant_id  = get_active_tenant_id()
+        data_path  = f"data/tenant_{tenant_id}" if tenant_id else DATA_PATH
+        collection = f"tenant_{tenant_id}" if tenant_id else "default"
+        os.makedirs(data_path, exist_ok=True)
         filename    = filename_from_url(url)
         saved_paths = scrape_full_website(url, filename)
-        documents   = load_documents()
+        documents   = load_documents(data_path)
         chunks      = split_documents(documents)
-        add_to_chroma(chunks)
+        add_to_chroma(chunks, collection_name=collection)
         query_data._DB = None
         ingest = {"ok": True, "message": f"Scraped {len(saved_paths)} page(s) from {url} and indexed them.",
                   "path": ", ".join(saved_paths[:3]) + ("..." if len(saved_paths) > 3 else "")}
@@ -405,10 +427,14 @@ def upload_file():
         if extension not in ALLOWED_UPLOAD_EXTENSIONS:
             raise ValueError("only PDF, Word, text, and Markdown files are supported")
         os.makedirs(DATA_PATH, exist_ok=True)
-        saved_path = save_upload_as_markdown(uploaded_file, original_name)
-        documents  = load_documents()
+        tenant_id  = get_active_tenant_id()
+        data_path  = f"data/tenant_{tenant_id}" if tenant_id else DATA_PATH
+        collection = f"tenant_{tenant_id}" if tenant_id else "default"
+        os.makedirs(data_path, exist_ok=True)
+        saved_path = save_upload_as_markdown(uploaded_file, original_name, data_path)
+        documents  = load_documents(data_path)
         chunks     = split_documents(documents)
-        add_to_chroma(chunks)
+        add_to_chroma(chunks, collection_name=collection)
         query_data._DB = None
         ingest = {"ok": True, "message": f"Uploaded, converted to Markdown, and indexed {original_name}.", "path": saved_path}
     except Exception as exc:
@@ -429,10 +455,10 @@ def clear_all_histories():
     return jsonify({"deleted": True, "deleted_count": deleted})
 
 # ── File helpers ───────────────────────────────────────────────────────────────
-def save_upload_as_markdown(uploaded_file, original_name: str) -> str:
+def save_upload_as_markdown(uploaded_file, original_name: str, data_path: str = DATA_PATH) -> str:
     extension     = Path(original_name).suffix.lower()
-    markdown_name = unique_markdown_filename(Path(original_name).stem)
-    markdown_path = os.path.join(DATA_PATH, markdown_name)
+    markdown_name = unique_markdown_filename(Path(original_name).stem, data_path)
+    markdown_path = os.path.join(data_path, markdown_name)
     if extension in {".md", ".markdown"}:   content = read_uploaded_text(uploaded_file)
     elif extension == ".txt":               content = text_to_markdown(read_uploaded_text(uploaded_file), original_name)
     elif extension == ".pdf":               content = pdf_to_markdown(uploaded_file, original_name)
@@ -442,10 +468,10 @@ def save_upload_as_markdown(uploaded_file, original_name: str) -> str:
         f.write(content.strip() + "\n")
     return markdown_path
 
-def unique_markdown_filename(base_name: str) -> str:
+def unique_markdown_filename(base_name: str, data_path: str = DATA_PATH) -> str:
     safe_base = secure_filename(base_name) or "uploaded-document"
     candidate = f"{safe_base}.md"; counter = 2
-    while os.path.exists(os.path.join(DATA_PATH, candidate)):
+    while os.path.exists(os.path.join(data_path, candidate)):
         candidate = f"{safe_base}-{counter}.md"; counter += 1
     return candidate
 

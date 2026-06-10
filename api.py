@@ -83,8 +83,7 @@ def _get_collection_name(api_key: str) -> str | None:
     tenants = _load_tenants()
     for t in tenants:
         if t.get("api_key") == api_key:
-            name = t.get("name", "")
-            return name.lower().replace(" ", "-")
+            return t.get("tenant_id") or t.get("name", "").lower().replace(" ", "-")
     return None
 
 app = FastAPI(
@@ -249,6 +248,14 @@ async def chat(req: ChatRequest, request: FastAPIRequest):
         collection_name = _get_collection_name(session.get("api_key") or stored_key)
         raw = query_rag_web(question, chat_history=chat_history, collection_name=collection_name)
         answer = _extract_answer(raw)
+        from usage_analytics import record_query_event
+        record_query_event(
+            source="widget",
+            session_id=sid,
+            query=question,
+            result=raw if isinstance(raw, dict) else {},
+            tenant_id=_get_collection_name(session.get("api_key")),
+        )
     except Exception as exc:
         print(f"[api.py] RAG error: {exc}")
         raise HTTPException(

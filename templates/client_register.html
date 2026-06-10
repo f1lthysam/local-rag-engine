@@ -9,16 +9,16 @@
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg:           #050507;
-    --surface:      #111214;
-    --surface2:     #1b1a20;
-    --border:       rgba(255,255,255,0.08);
-    --border2:      rgba(255,255,255,0.12);
-    --text:         #f4ece0;
-    --muted:        #b8aa9a;
-    --accent:       #ff8c26;
-    --accent-soft:  rgba(255,140,38,0.14);
-    --accent-glow:  rgba(255,140,38,0.3);
+    --bg:          #1b1b1f;
+    --surface:     #232327;
+    --surface2:    #2a2a2f;
+    --border:      rgba(255,255,255,0.06);
+    --border2:     rgba(255,255,255,0.09);
+    --text:        #e8e8ea;
+    --muted:       #8b8b96;
+    --accent:      #e8e8ea;
+    --accent-soft: rgba(255,255,255,0.07);
+    --accent-glow: rgba(255,255,255,0.1);
     --danger:       #e05555;
     --danger-soft:  rgba(224,85,85,0.12);
     --success:      #3ecf8e;
@@ -35,17 +35,6 @@
     font-size: 15px;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      radial-gradient(circle at 15% 20%, rgba(255,140,38,0.09), transparent 28%),
-      radial-gradient(circle at 85% 80%, rgba(255,140,38,0.05), transparent 22%);
-    pointer-events: none;
-    z-index: 0;
   }
 
   body {
@@ -76,14 +65,9 @@
     padding-bottom: 24px;
     border-bottom: 1px solid var(--border);
   }
-  .logo-icon {
-    width: 34px; height: 34px;
-    background: linear-gradient(135deg, #ff8c26, #ffb86b);
-    border-radius: 9px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px;
-    flex-shrink: 0;
-  }
+  
+  .logo-icon { width: 34px; height: 34px; background: rgba(255,255,255,0.1); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 17px; flex-shrink: 0; }
+
   .logo-text {
     font-size: 15px;
     font-weight: 600;
@@ -163,7 +147,7 @@
   .btn:hover { opacity: 0.88; transform: translateY(-1px); }
   .btn:active { transform: scale(0.97); }
   .btn-primary {
-    background: linear-gradient(135deg, #ff8c26, #ffb86b);
+    background:#ff8c26;
     color: #0a0a0a;
     box-shadow: 0 4px 16px rgba(255,140,38,0.25);
   }
@@ -174,11 +158,7 @@
     font-size: 13px;
     color: var(--muted);
   }
-  .links a {
-    color: var(--accent);
-    text-decoration: none;
-    font-weight: 500;
-  }
+  .links a { color: var(--text); text-decoration: underline; font-weight: 500; }
   .links a:hover { text-decoration: underline; }
 
   .alert {

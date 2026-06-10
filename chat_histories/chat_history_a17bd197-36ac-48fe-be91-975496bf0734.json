@@ -1,0 +1,32 @@
+{
+  "session_id": "a17bd197-36ac-48fe-be91-975496bf0734",
+  "source": "widget",
+  "created_at": "2026-06-10T12:07:27Z",
+  "updated_at": "2026-06-10T12:07:59Z",
+  "title": "whart is soham clothing",
+  "messages": [
+    {
+      "role": "user",
+      "content": "whart is soham clothing",
+      "timestamp": "2026-06-10T12:07:35Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Soham Clothing is a fictional fashion brand founded in 2021 by Soham Patel. Headquartered in Ahmedabad, Gujarat, India, the company operates in the fashion and apparel industry with a vision to provide trendy, comfortable, and affordable clothing for people of all ages. Their product offerings include men's wear such as T-shirts, casual shirts, and formal shirts.",
+      "timestamp": "2026-06-10T12:07:41Z"
+    }
+  ],
+  "turns": [
+    {
+      "query": "whart is soham clothing",
+      "response": "Soham Clothing is a fictional fashion brand founded in 2021 by Soham Patel. Headquartered in Ahmedabad, Gujarat, India, the company operates in the fashion and apparel industry with a vision to provide trendy, comfortable, and affordable clothing for people of all ages. Their product offerings include men's wear such as T-shirts, casual shirts, and formal shirts.",
+      "timestamp": "2026-06-10T12:07:41Z",
+      "prompt_tokens": 589,
+      "response_tokens": 75,
+      "total_tokens": 664,
+      "latency": 6.43
+    }
+  ],
+  "api_key": "ak_WZ8QBzhSJVuIDdaXtKY7d5o1rxMuxU98",
+  "ended_at": "2026-06-10T12:07:59Z"
+}

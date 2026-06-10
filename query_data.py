@@ -219,15 +219,13 @@ def query_rag(
 
     if not results or results[0][1] > THRESHOLD:
         if not dataset_filter:
-            lexical_answer = answer_from_lexical_fallback(
-                query_text, "No previous conversation.", start_time)
+            lexical_answer = answer_from_lexical_fallback(query_text, history_text, start_time)
             if lexical_answer:
-                print(f"\nResponse: {lexical_answer['response']}")
-                print(f"Confidence: {lexical_answer['confidence']}%")
-                print(f"Sources:  {lexical_answer['sources']}")
-                print(f"Latency:  {lexical_answer['latency']:.2f}s")
-                print(f"Tokens:   prompt={lexical_answer['prompt_tokens']} · response={lexical_answer['response_tokens']} · total={lexical_answer['total_tokens']}\n")
-                return lexical_answer["response"]
+                lexical_answer["dataset_filter"] = None
+                return lexical_answer
+
+        latency = time.perf_counter() - start_time
+        return _no_info_result(retrieval_query, retrieval_plan, latency, dataset_filter)
         print("\nResponse: I don't have information about that in my documents.")
         print("Confidence: N/A")
         print("Sources:  []")
@@ -308,7 +306,7 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
     custom_instructions = get_published_prompt_instructions()
 
     # Direct markdown lookup only when no dataset filter is active
-    if not dataset_filter:
+    if not dataset_filter and not collection_name:
         direct_answer = find_direct_markdown_answer(query_text)
         if direct_answer:
             answer, source  = direct_answer

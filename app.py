@@ -22,7 +22,31 @@ import query_data
 from scrape_web import scrape_and_save, scrape_full_website
 from usage_analytics import record_query_event, usage_summary
 
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "admin_oaHHpo_leC9Kr5p_I5DCjdLJ-HTLf-pAQBR3U0RQD1Y")
+
 app = Flask(__name__, template_folder="templates")
+
+@app.route("/admin/login", methods=["GET", "POST"])
+def admin_login():
+    if session.get("is_admin"):
+        return redirect(url_for("dashboard"))
+    error = None
+    if request.method == "POST":
+        username = request.form.get("username", "").strip()
+        password = request.form.get("password", "").strip()
+        if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+            session["is_admin"] = True
+            session.permanent = True
+            return redirect(url_for("dashboard"))
+        error = "Invalid credentials."
+    return render_template("admin_login.html", error=error)
+
+@app.route("/admin/logout")
+def admin_logout():
+    session.pop("is_admin", None)
+    return redirect(url_for("admin_login"))
+
 
 app.register_blueprint(client_portal_bp)
 register_client_auth(app)

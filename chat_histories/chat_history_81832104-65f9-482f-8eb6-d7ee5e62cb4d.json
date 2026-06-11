@@ -2,7 +2,7 @@
   "session_id": "81832104-65f9-482f-8eb6-d7ee5e62cb4d",
   "source": "widget",
   "created_at": "2026-06-11T10:39:19Z",
-  "updated_at": "2026-06-11T10:39:42Z",
+  "updated_at": "2026-06-11T11:23:58Z",
   "title": "What services do you offer?",
   "messages": [
     {
@@ -46,5 +46,6 @@
       "latency": 6.76
     }
   ],
-  "api_key": "ak_JDR1ERdAVlIR6bQlOTk0vB5CnBmbJbkG"
+  "api_key": "ak_JDR1ERdAVlIR6bQlOTk0vB5CnBmbJbkG",
+  "ended_at": "2026-06-11T11:23:58Z"
 }

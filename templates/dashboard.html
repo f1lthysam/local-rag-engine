@@ -309,7 +309,7 @@
         <div class="stat-card-value">{{ tenants|length }}</div>
       </div>
       <div class="stat-card">
-        <div class="stat-card-label">Datasets</div>
+        <div class="stat-card-label">Total Datasets</div>
         <div class="stat-card-value" id="ds-count">{{ dashboard_stats.dataset_count }}</div>
       </div>
       <div class="stat-card">
@@ -417,6 +417,14 @@
         <button class="btn btn-primary" onclick="openCreateModal()">Create Tenant</button>
       </div>
       {% endif %}
+    </div>
+    <div style="margin-top:36px;">
+      <div class="section-head">
+        <div class="section-title">Requests per Tenant</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;">
+        <canvas id="tenant-chart" height="80"></canvas>
+      </div>
     </div>
   </main>
 </div>
@@ -605,6 +613,43 @@
   function copyEmbedCode() { navigator.clipboard.writeText(_currentEmbedCode).then(() => showToast('Embed code copied!', 'success')); }
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') { closeCreateModal(); closeEmbedModal(); } });
+
+
+  // Tenant requests chart
+  (function(){
+    const tenants = {{ tenants | tojson }};
+    if (!tenants.length) return;
+    const labels = tenants.map(t => t.name);
+    const data   = tenants.map(t => t.requests_used || 0);
+    const script = document.createElement('script');
+    script.src = 'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js';
+    script.onload = function() {
+      const ctx = document.getElementById('tenant-chart').getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [{
+            label: 'Requests Used',
+            data,
+            backgroundColor: tenants.map((_, i) => `hsl(${i * 60},60%,55%)`),
+            borderColor: tenants.map((_, i) => `hsl(${i * 60},70%,65%)`),
+            borderWidth: 1,
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: { ticks: { color: '#8b8b96' }, grid: { color: 'rgba(255,255,255,0.04)' } },
+            y: { ticks: { color: '#8b8b96' }, grid: { color: 'rgba(255,255,255,0.04)' }, beginAtZero: true }
+          }
+        }
+      });
+    };
+    document.head.appendChild(script);
+  })();
 </script>
 </body>
 </html>

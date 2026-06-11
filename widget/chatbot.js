@@ -499,10 +499,17 @@ const CFG = Object.assign(
       : `<div class="rc-avatar rc-avatar-bot">${ICON.bot}</div>`;
 
     const bubbleClass = isUser ? 'rc-bubble rc-bubble-user' : 'rc-bubble rc-bubble-bot';
+    
+
+    const now = new Date();
+    const timeStr = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
 
     row.innerHTML = `
       ${avatarHtml}
-      <div class="${bubbleClass}">${formatMd(content)}</div>`;
+      <div style="display:flex;flex-direction:column;${isUser ? 'align-items:flex-end' : 'align-items:flex-start'}">
+        <div class="${bubbleClass}">${formatMd(content)}</div>
+        <span style="font-size:10px;color:#647144;margin-top:3px;padding:0 2px">${timeStr}</span>
+      </div>`;
 
     el.appendChild(row);
     scrollBottom();

@@ -128,7 +128,7 @@ def tenant_stats(tenant: dict) -> dict:
     return {"session_count": len(sessions), "dataset_count": len(datasets)}
 
 def dashboard_stats() -> dict:
-    datasets  = list(Path(DATA_PATH).glob("*.md")) if Path(DATA_PATH).exists() else []
+    datasets  = [f for f in Path(DATA_PATH).rglob("*") if f.is_file()] if Path(DATA_PATH).exists() else []
     histories = list(HISTORY_DIR.glob("chat_history_*.json")) if HISTORY_DIR.exists() else []
     usage     = usage_summary()
     return {

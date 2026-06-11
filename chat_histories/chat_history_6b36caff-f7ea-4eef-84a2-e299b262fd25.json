@@ -2,7 +2,7 @@
   "session_id": "6b36caff-f7ea-4eef-84a2-e299b262fd25",
   "source": "widget",
   "created_at": "2026-06-11T10:24:15Z",
-  "updated_at": "2026-06-11T10:26:50Z",
+  "updated_at": "2026-06-11T11:20:09Z",
   "title": "hello",
   "messages": [
     {
@@ -34,6 +34,16 @@
       "role": "assistant",
       "content": "Soham Clothing was founded in 2021 by Soham Patel.",
       "timestamp": "2026-06-11T10:26:50Z"
+    },
+    {
+      "role": "user",
+      "content": "bonjour",
+      "timestamp": "2026-06-11T11:20:08Z"
+    },
+    {
+      "role": "assistant",
+      "content": "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
+      "timestamp": "2026-06-11T11:20:09Z"
     }
   ],
   "turns": [
@@ -54,6 +64,15 @@
       "response_tokens": 15,
       "total_tokens": 604,
       "latency": 6.28
+    },
+    {
+      "query": "bonjour",
+      "response": "Bonjour ! Comment puis-je vous aider aujourd'hui ?",
+      "timestamp": "2026-06-11T11:20:09Z",
+      "prompt_tokens": 2,
+      "response_tokens": 11,
+      "total_tokens": 13,
+      "latency": 1.01
     }
   ],
   "api_key": "ak_snG20mVBTPSENsTT5xnbJ4VurJg9D7Kz"

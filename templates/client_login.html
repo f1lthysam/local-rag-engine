@@ -24,7 +24,7 @@
     --success:      #3ecf8e;
     --success-soft: rgba(62,207,142,0.12);
     --sans:         'Inter', system-ui, sans-serif;
-    --radius:       14px;
+    /* --radius:       14px; */
     --radius-sm:    8px;
   }
 
@@ -206,16 +206,14 @@
   <h2>Welcome back</h2>
   <p class="sub">Log in to manage your chatbot.</p>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-      <div class="alert alert-{{ cat }}">{{ msg|safe }}</div>
-    {% endfor %}
-  {% endwith %}
+  
+      <div class="alert alert-{{ cat }}"></div>
+   
 
   <form method="POST">
     <div class="form-group">
       <label class="form-label">Email</label>
-      <input class="form-input" type="email" name="email" value="{{ email or '' }}" required autofocus placeholder="you@example.com">
+      <input class="form-input" type="email" name="email"  required autofocus placeholder="you@example.com">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>

@@ -24,7 +24,7 @@
     --success:      #3ecf8e;
     --success-soft: rgba(62,207,142,0.12);
     --sans:         'Inter', system-ui, sans-serif;
-    --radius:       14px;
+    /* --radius:       14px; */
     --radius-sm:    8px;
   }
 
@@ -198,25 +198,23 @@
   <h2>Create your account</h2>
   <p class="sub">Set up your chatbot portal in seconds.</p>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-      <div class="alert alert-{{ cat }}">{{ msg }}</div>
-    {% endfor %}
-  {% endwith %}
+  
+      <div class="alert alert-{{ cat }}"></div>
+    
 
   <form method="POST">
     <div class="form-group">
       <label class="form-label">Company / Business Name</label>
-      <input class="form-input" type="text" name="company_name" value="{{ form.company_name if form else '' }}" required placeholder="e.g. Acme Corp">
+      <input class="form-input" type="text" name="company_name"  required placeholder="e.g. Acme Corp">
     </div>
     <div class="form-group">
       <label class="form-label">Tenant ID</label>
-      <input class="form-input" type="text" name="tenant_id" value="{{ form.tenant_id if form else '' }}" placeholder="e.g. my-clothing-store" required pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, hyphens only">
+      <input class="form-input" type="text" name="tenant_id"  placeholder="e.g. my-clothing-store" required pattern="[a-z0-9\-]+" title="Lowercase letters, numbers, hyphens only">
       <div class="hint">Lowercase letters, numbers, hyphens only. Cannot be changed later.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Email Address</label>
-      <input class="form-input" type="email" name="email" value="{{ form.email if form else '' }}" required placeholder="you@example.com">
+      <input class="form-input" type="email" name="email"  required placeholder="you@example.com">
     </div>
     <div class="form-group">
       <label class="form-label">Password</label>

@@ -1,0 +1,50 @@
+{
+  "session_id": "81832104-65f9-482f-8eb6-d7ee5e62cb4d",
+  "source": "widget",
+  "created_at": "2026-06-11T10:39:19Z",
+  "updated_at": "2026-06-11T10:39:42Z",
+  "title": "What services do you offer?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What services do you offer?",
+      "timestamp": "2026-06-11T10:39:21Z"
+    },
+    {
+      "role": "assistant",
+      "content": "We offer the following services:\n\n*   **AI Agents & Automation**\n*   **Custom AI Apps & Chatbots**\n*   **AI Strategy & Enablement**\n*   **Data & Intelligence**\n\nYou can learn more about these on our services page or by booking a 20-minute discovery call.",
+      "timestamp": "2026-06-11T10:39:28Z"
+    },
+    {
+      "role": "user",
+      "content": "what is soham clothing",
+      "timestamp": "2026-06-11T10:39:36Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I don't have information about that. Please contact us directly for assistance.",
+      "timestamp": "2026-06-11T10:39:42Z"
+    }
+  ],
+  "turns": [
+    {
+      "query": "What services do you offer?",
+      "response": "We offer the following services:\n\n*   **AI Agents & Automation**\n*   **Custom AI Apps & Chatbots**\n*   **AI Strategy & Enablement**\n*   **Data & Intelligence**\n\nYou can learn more about these on our services page or by booking a 20-minute discovery call.",
+      "timestamp": "2026-06-11T10:39:28Z",
+      "prompt_tokens": 2809,
+      "response_tokens": 60,
+      "total_tokens": 2869,
+      "latency": 7.07
+    },
+    {
+      "query": "what is soham clothing",
+      "response": "I don't have information about that. Please contact us directly for assistance.",
+      "timestamp": "2026-06-11T10:39:42Z",
+      "prompt_tokens": 1767,
+      "response_tokens": 15,
+      "total_tokens": 1782,
+      "latency": 6.76
+    }
+  ],
+  "api_key": "ak_JDR1ERdAVlIR6bQlOTk0vB5CnBmbJbkG"
+}

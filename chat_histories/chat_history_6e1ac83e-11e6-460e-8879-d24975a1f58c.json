@@ -1,0 +1,51 @@
+{
+  "session_id": "6e1ac83e-11e6-460e-8879-d24975a1f58c",
+  "source": "widget",
+  "created_at": "2026-06-11T06:28:09Z",
+  "updated_at": "2026-06-11T08:35:02Z",
+  "title": "what is soham clothing",
+  "messages": [
+    {
+      "role": "user",
+      "content": "what is soham clothing",
+      "timestamp": "2026-06-11T06:28:15Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I don't have information about that in my documents.",
+      "timestamp": "2026-06-11T06:28:15Z"
+    },
+    {
+      "role": "user",
+      "content": "soham",
+      "timestamp": "2026-06-11T06:28:20Z"
+    },
+    {
+      "role": "assistant",
+      "content": "I don't have information about that in my documents.",
+      "timestamp": "2026-06-11T06:28:20Z"
+    }
+  ],
+  "turns": [
+    {
+      "query": "what is soham clothing",
+      "response": "I don't have information about that in my documents.",
+      "timestamp": "2026-06-11T06:28:15Z",
+      "prompt_tokens": 5,
+      "response_tokens": null,
+      "total_tokens": 5,
+      "latency": 0.04
+    },
+    {
+      "query": "soham",
+      "response": "I don't have information about that in my documents.",
+      "timestamp": "2026-06-11T06:28:20Z",
+      "prompt_tokens": 29,
+      "response_tokens": null,
+      "total_tokens": 29,
+      "latency": 0.04
+    }
+  ],
+  "api_key": "admin_oaHHpo_leC9Kr5p_I5DCjdLJ-HTLf-pAQBR3U0RQD1Y",
+  "ended_at": "2026-06-11T08:35:02Z"
+}

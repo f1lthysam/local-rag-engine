@@ -22,7 +22,7 @@
     --success:      #3ecf8e;
     --success-soft: rgba(62,207,142,0.12);
     --sans:         'Inter', system-ui, sans-serif;
-    --radius:       14px;
+    /* --radius:       14px; */
     --radius-sm:    8px;
   }
 
@@ -182,11 +182,9 @@
   <h2>Resend verification</h2>
   <p class="sub">Enter your email and we'll send a fresh verification link.</p>
 
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% for cat, msg in messages %}
-      <div class="alert alert-{{ 'success' if cat == 'success' else 'error' }}">{{ msg }}</div>
-    {% endfor %}
-  {% endwith %}
+  
+      <div class="alert alert-{{ 'success' if cat == 'success' else 'error' }}"></div>
+    
 
   <form method="POST">
     <div class="form-group">

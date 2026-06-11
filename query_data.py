@@ -18,7 +18,7 @@ os.environ["PYTHONWARNINGS"] = "ignore"
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 CHROMA_PATH = "chroma"
 DATA_PATH = "data"
-THRESHOLD = 1.2
+THRESHOLD = 1.5
 MIN_CONFIDENCE = 40.0
 LEXICAL_FALLBACK_CONFIDENCE = 40.0
 DEFAULT_K = 5
@@ -26,50 +26,25 @@ MIN_CONTEXT_TOKENS = 900
 MAX_CONTEXT_TOKENS = 4200
 MAX_RETRIEVAL_K = 14
 MAX_HISTORY_CHARS = 2500
-FOUL_LANGUAGE_RESPONSE = "Please keep the conversation respectful. I can't process requests that contain foul language."
-FOUL_LANGUAGE_TERMS = {
-    "ass",
-    "asshole",
-    "bastard",
-    "bitch",
-    "bullshit",
-    "crap",
-    "cunt",
-    "damn",
-    "dick",
-    "fuck",
-    "fucker",
-    "fucking",
-    "motherfucker",
-    "piss",
-    "prick",
-    "shit",
-    "slut",
-    "whore",
-}
 _DB = None
 _PROMPT_TEMPLATE = None
 _GEMINI_MODEL = None
 
 
 PROMPT_TEMPLATE = """
-You are a helpful, conversational assistant. Use the rules below in order:
+You are a helpful assistant for this business. Your primary job is to answer questions using the provided document context.
 
-1. FOLLOW-UPS: If the question is a follow-up ("why?", "explain more", "what about that?", "how?"),
-   use the conversation history to understand what is being referred to, then answer it naturally.
+1. GREETINGS: Respond naturally to greetings only ("hi", "hello", "hey there", "how are you"). Keep it brief, 1-2 sentences max.
 
-2. DOCUMENT CONTEXT: If the retrieved context contains relevant information, use it as your
-   primary source and answer directly and concisely. Prefer context over general knowledge.
+2. DOCUMENT FIRST: Always use the context below as your only source. If context has relevant info, answer from it directly and concisely.
 
-3. ALLOWED GENERAL: You may answer ONLY these types of questions from general knowledge:
-   - Greetings and small talk ("hi", "how are you", "thanks")
-   - Coding/technical help unrelated to the documents
-   - Simple definitions of common technical terms
+3. SMART LINKING: If the user's question relates to the business but isn't exact, connect it to context. Example: "i wanna buy clothes" → look for products/catalog in context and respond from that.
 
-4. BLOCKED: For ANY question about a person, place, brand, product, event, or topic
-   that is not mentioned in the retrieved context, respond with exactly:
-   "I don't have information about that in my knowledge base."
-   
+4. NO INFO: If context has nothing relevant, respond with exactly:
+   "I don't have information about that. Please contact us directly for assistance."
+
+5. NEVER use general knowledge, never ask clarifying questions, never suggest alternatives outside the documents.
+
 {custom_instructions}
 
 {dataset_note}
@@ -93,40 +68,6 @@ def count_tokens(text: str) -> int:
     return len(enc.encode(str(text)))
 
 
-def normalize_for_profanity(text: str) -> str:
-    normalized = str(text).lower()
-    normalized = normalized.replace("@", "a").replace("$", "s").replace("!", "i")
-    return re.sub(r"[^a-z0-9]+", " ", normalized).strip()
-
-
-def contains_foul_language(text: str) -> bool:
-    words = set(normalize_for_profanity(text).split())
-    return bool(words & FOUL_LANGUAGE_TERMS)
-
-
-def foul_language_result(query_text: str, start_time: float | None = None,
-                         dataset_filter: str = None) -> dict:
-    latency = 0 if start_time is None else time.perf_counter() - start_time
-    response_tokens = count_tokens(FOUL_LANGUAGE_RESPONSE)
-    prompt_tokens = count_tokens(query_text)
-    return {
-        "response":        FOUL_LANGUAGE_RESPONSE,
-        "confidence":      None,
-        "sources":         [],
-        "no_info":         True,
-        "blocked":         True,
-        "block_reason":    "foul_language",
-        "latency":         round(latency, 2),
-        "prompt_tokens":   prompt_tokens,
-        "response_tokens": response_tokens,
-        "total_tokens":    prompt_tokens + response_tokens,
-        "retrieval_mode":  "guardrail",
-        "retrieved_chunks": 0,
-        "context_tokens":  0,
-        "dataset_filter":  dataset_filter,
-    }
-
-
 def extract_response_text(raw) -> str:
     if isinstance(raw, str):
         return raw
@@ -142,11 +83,9 @@ def extract_response_text(raw) -> str:
 
 
 def resolve_source_path(filename: str) -> str:
-    """Convert a bare filename like 'books_all.md' to its full relative path."""
     candidate = str(Path(DATA_PATH) / filename)
     if Path(candidate).exists():
         return candidate
-    # Already a full path
     if Path(filename).exists():
         return filename
     return candidate
@@ -160,8 +99,7 @@ def main():
     parser.add_argument("--no-llm", action="store_true")
     parser.add_argument("--force-rag", action="store_true")
     parser.add_argument("--interactive", action="store_true")
-    parser.add_argument("--dataset", type=str, default=None,
-                        help="Restrict answers to a single .md file (filename only).")
+    parser.add_argument("--dataset", type=str, default=None)
     args = parser.parse_args()
 
     if args.interactive:
@@ -183,15 +121,22 @@ def query_rag(
     force_rag: bool = False,
     dataset_filter: str = None,
 ):
-    start_time     = time.perf_counter()
-    if contains_foul_language(query_text):
-        result = foul_language_result(query_text, start_time, dataset_filter)
-        print(f"\nResponse: {result['response']}")
-        print("Guardrail: foul_language")
-        print("Sources:  []")
-        print(f"Latency:  {result['latency']:.2f}s")
-        print(f"Tokens:   prompt={result['prompt_tokens']} · response={result['response_tokens']} · total={result['total_tokens']}\n")
-        return result["response"]
+    start_time = time.perf_counter()
+
+    GREETINGS = {"hi", "hello", "hey", "thanks", "thank you", "bye", "goodbye",
+                 "how are you", "good morning", "good evening", "good afternoon",
+                 "what can you do", "what can you help me with", "who are you"}
+    q = query_text.strip().lower()
+    is_greeting = q in GREETINGS or (len(q.split()) <= 4 and not any(
+        c in q for c in ["?", "what", "why", "how", "when", "where", "which", "who"]
+    ))
+    if is_greeting:
+        from langchain_core.messages import HumanMessage
+        raw = get_gemini_model().invoke([HumanMessage(content=query_text)]).content
+        response_text = extract_response_text(raw)
+        latency = time.perf_counter() - start_time
+        print(f"\nResponse: {response_text}")
+        return response_text
 
     retrieval_plan = plan_retrieval(query_text, k_override=k)
 
@@ -209,23 +154,15 @@ def query_rag(
             print(f"Tokens:   prompt={prompt_tokens} · response={response_tokens} · total={prompt_tokens + response_tokens}\n")
             return answer
 
-    db      = get_vector_db()
+    db = get_vector_db()
     results = similarity_search_filtered(db, query_text, retrieval_plan["k"], dataset_filter)
-    retrieval_done_time = time.perf_counter()
-
-    if debug:
-        print(f"Retrieval: {retrieval_done_time - start_time:.2f}s")
-        print(f"Scores: {[score for _, score in results]}")
 
     if not results or results[0][1] > THRESHOLD:
         if not dataset_filter:
-            lexical_answer = answer_from_lexical_fallback(query_text, history_text, start_time)
+            lexical_answer = answer_from_lexical_fallback(
+                query_text, "No previous conversation.", start_time)
             if lexical_answer:
-                lexical_answer["dataset_filter"] = None
-                return lexical_answer
-
-        latency = time.perf_counter() - start_time
-        return _no_info_result(retrieval_query, retrieval_plan, latency, dataset_filter)
+                return lexical_answer["response"]
         print("\nResponse: I don't have information about that in my documents.")
         print("Confidence: N/A")
         print("Sources:  []")
@@ -290,14 +227,29 @@ def query_rag(
 
 
 def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None, collection_name: str = None):
-    """
-    Main web-facing query function.
-    dataset_filter: bare filename like 'aliansoftware.com-en.md'
-                    or None to search all datasets.
-    """
-    start_time      = time.perf_counter()
-    if contains_foul_language(query_text):
-        return foul_language_result(query_text, start_time, dataset_filter)
+    start_time = time.perf_counter()
+
+    GREETINGS = {"hi", "hello", "hey", "thanks", "thank you", "bye", "goodbye",
+                 "how are you", "good morning", "good evening", "good afternoon",
+                 "what can you do", "what can you help me with", "who are you"}
+    q = query_text.strip().lower()
+    is_greeting = q in GREETINGS or (len(q.split()) <= 4 and not any(
+        c in q for c in ["?", "what", "why", "how", "when", "where", "which", "who"]
+    ))
+    if is_greeting:
+        from langchain_core.messages import HumanMessage
+        raw = get_gemini_model().invoke([HumanMessage(content=query_text)]).content
+        response_text = extract_response_text(raw)
+        latency = time.perf_counter() - start_time
+        return {
+            "response": response_text, "confidence": None, "sources": [],
+            "no_info": False, "latency": round(latency, 2),
+            "prompt_tokens": count_tokens(query_text),
+            "response_tokens": count_tokens(response_text),
+            "total_tokens": count_tokens(query_text) + count_tokens(response_text),
+            "retrieval_mode": "direct", "retrieved_chunks": 0, "context_tokens": 0,
+            "dataset_filter": dataset_filter,
+        }
 
     history_text    = format_chat_history(chat_history)
     retrieval_query = build_retrieval_query(query_text, chat_history)
@@ -305,7 +257,6 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
     dataset_note    = _dataset_note(dataset_filter)
     custom_instructions = get_published_prompt_instructions()
 
-    # Direct markdown lookup only when no dataset filter is active
     if not dataset_filter and not collection_name:
         direct_answer = find_direct_markdown_answer(query_text)
         if direct_answer:
@@ -328,17 +279,18 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
                 "dataset_filter":  None,
             }
 
-    db = get_vector_db(collection_name=collection_name)
-    results = similarity_search_filtered(db, retrieval_query, retrieval_plan["k"], dataset_filter)
+    if collection_name:
+        db = get_vector_db(collection_name=collection_name)
+        results = similarity_search_filtered(db, retrieval_query, retrieval_plan["k"], dataset_filter)
+    else:
+        results = search_all_collections(retrieval_query, retrieval_plan["k"])
 
     if not results or results[0][1] > THRESHOLD:
-        # If filtering is active, do NOT fall back to lexical (would leak other datasets)
         if not dataset_filter:
             lexical_answer = answer_from_lexical_fallback(query_text, history_text, start_time)
             if lexical_answer:
                 lexical_answer["dataset_filter"] = None
                 return lexical_answer
-
         latency = time.perf_counter() - start_time
         return _no_info_result(retrieval_query, retrieval_plan, latency, dataset_filter)
 
@@ -396,24 +348,14 @@ def query_rag_web(query_text: str, chat_history=None, dataset_filter: str = None
 # ── Dataset filter helpers ────────────────────────────────────────────────────
 
 def similarity_search_filtered(db, query: str, k: int, dataset_filter: str = None):
-    """
-    Run ChromaDB similarity search.
-    If dataset_filter is set, restrict results to chunks whose 'source'
-    metadata ends with the selected filename.
-    """
     if not dataset_filter:
         return db.similarity_search_with_score(query, k=k)
-
-    # ChromaDB stores source as e.g. "data\\aliansoftware.com-en.md" or "data/aliansoftware.com-en.md"
-    # We match using $contains on the source field
     try:
         return db.similarity_search_with_score(
-            query,
-            k=k,
+            query, k=k,
             filter={"source": {"$contains": dataset_filter}},
         )
     except Exception:
-        # Fallback: fetch more results and filter manually (handles older ChromaDB versions)
         all_results = db.similarity_search_with_score(query, k=k * 4)
         return [
             (doc, score)
@@ -423,7 +365,6 @@ def similarity_search_filtered(db, query: str, k: int, dataset_filter: str = Non
 
 
 def _dataset_note(dataset_filter: str) -> str:
-    """Build the dataset restriction note injected into the prompt."""
     if not dataset_filter:
         return ""
     return (
@@ -447,7 +388,6 @@ def get_published_prompt_instructions() -> str:
     constraints = str(published.get("constraints") or "").strip()
     if not role and not constraints:
         return ""
-
     parts = ["CUSTOM DEPLOYED PROMPT SETTINGS:"]
     if role:
         parts.append(f"- Role: {role}")
@@ -592,6 +532,8 @@ def plan_retrieval(query_text: str, chat_history=None, k_override=None):
         "summarize", "summary", "explain", "describe", "overview", "details",
         "compare", "difference", "differences", "list", "all", "features",
         "services", "steps", "process", "why", "how",
+        "buy", "purchase", "shop", "order", "clothes", "clothing", "wear",
+        "product", "collection", "available", "want", "looking",
     }
     fact_markers = {
         "who", "what", "when", "where", "which", "email", "phone", "price",
@@ -634,15 +576,15 @@ def build_dynamic_context(results, retrieval_plan, query_text=""):
         -keyword_overlap(item[0].page_content, query_terms), item[1]
     ))
 
-    context_parts   = []
+    context_parts    = []
     selected_results = []
-    used_tokens     = 0
-    token_budget    = retrieval_plan["context_tokens"]
+    used_tokens      = 0
+    token_budget     = retrieval_plan["context_tokens"]
     per_chunk_budget = retrieval_plan["max_chunk_tokens"]
 
     for doc, score in candidate_results:
-        chunk_text      = trim_to_token_budget(doc.page_content, per_chunk_budget)
-        chunk_tokens    = count_tokens(chunk_text)
+        chunk_text       = trim_to_token_budget(doc.page_content, per_chunk_budget)
+        chunk_tokens     = count_tokens(chunk_text)
         separator_tokens = count_tokens("\n\n---\n\n") if context_parts else 0
 
         if used_tokens + separator_tokens + chunk_tokens > token_budget:
@@ -721,6 +663,31 @@ def run_interactive(k, debug, no_llm, force_rag):
 
 # ── DB / model singletons ─────────────────────────────────────────────────────
 
+def search_all_collections(query: str, k: int) -> list:
+    import chromadb
+    from langchain_chroma import Chroma
+    from get_embedding_function import get_embedding_function
+
+    client = chromadb.PersistentClient(path=CHROMA_PATH)
+    collections = client.list_collections()
+    all_results = []
+
+    for col in collections:
+        try:
+            db = Chroma(
+                persist_directory=CHROMA_PATH,
+                embedding_function=get_embedding_function(),
+                collection_name=col.name,
+            )
+            results = db.similarity_search_with_score(query, k=k)
+            all_results.extend(results)
+        except Exception:
+            continue
+
+    all_results.sort(key=lambda x: x[1])
+    return all_results[:k]
+
+
 def get_vector_db(collection_name: str = None):
     from langchain_chroma import Chroma
     from get_embedding_function import get_embedding_function
@@ -760,7 +727,7 @@ def get_gemini_model():
 
 
 def distance_to_confidence(distance: float) -> float:
-    distance        = max(0.0, min(THRESHOLD, distance))
+    distance         = max(0.0, min(THRESHOLD, distance))
     confidence_range = 100.0 - MIN_CONFIDENCE
     return 100.0 - (distance / THRESHOLD) * confidence_range
 

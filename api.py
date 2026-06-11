@@ -277,6 +277,7 @@ async def chat(req: ChatRequest, request: FastAPIRequest):
     })
     session["updated_at"] = _utcnow()
     ACTIVE_SESSIONS[sid] = session
+    _save_persisted(session)  # persist after every turn
 
     return {"answer": answer, "session_id": sid, "title": session["title"]}
 
@@ -419,6 +420,7 @@ def new_session(api_key: Optional[str] = None):
         session = _new_session(sid)
         session["api_key"] = api_key
         ACTIVE_SESSIONS[sid] = session
+        _save_persisted(session)  # persist after every turn
     return {"session_id": sid}
 
 

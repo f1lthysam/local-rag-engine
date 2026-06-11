@@ -326,6 +326,7 @@ def change_password(client_id: int, old_password: str, new_password: str) -> dic
 # ── Session guard decorator ───────────────────────────────────────────────────
 
 def client_login_required(f):
+    
     """
     Decorator for portal routes. Redirects to login if not authenticated.
 
@@ -339,6 +340,13 @@ def client_login_required(f):
     def decorated(*args, **kwargs):
         if "client_id" not in session:
             flash("Please log in to access your portal.", "warning")
+            return redirect(url_for("client_portal.login"))
+        # verify account still exists
+        with get_db() as conn:
+            row = conn.execute("SELECT id, is_active FROM clients WHERE id = ?", (session["client_id"],)).fetchone()
+        if not row or not row["is_active"]:
+            logout_client()
+            flash("Your account has been deactivated or deleted.", "warning")
             return redirect(url_for("client_portal.login"))
         return f(*args, **kwargs)
     return decorated

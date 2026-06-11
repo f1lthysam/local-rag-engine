@@ -147,22 +147,32 @@ def get_chat_history():
     return CHAT_SESSIONS.setdefault(get_session_id(), [])
 
 def append_chat_turn(query, result):
-    record_query_event(
-    source="studio",
-    session_id=get_session_id(),
-    query=query,
-    result=result,
-    tenant_id=get_active_tenant_id(),
-)
     history = get_chat_history()
     history.append({"query": query, "result": result})
     del history[:-MAX_CHAT_TURNS]
+    record_query_event(
+        source="studio",
+        session_id=get_session_id(),
+        query=query,
+        result=result,
+        dataset=get_selected_dataset(),
+    )
 
 def get_available_datasets(tenant_id=None):
-    data_dir = Path(f"data/{tenant_id}") if tenant_id else Path(DATA_PATH)
+    if tenant_id:
+        data_dir = Path(f"data/{tenant_id}")
+        if not data_dir.exists():
+            return []
+        return sorted([f.name for f in data_dir.glob("*.md")])
+    data_dir = Path(DATA_PATH)
     if not data_dir.exists():
         return []
-    return sorted([f.name for f in data_dir.glob("*.md")])
+    datasets = sorted([f.name for f in data_dir.glob("*.md")])
+    for tenant_dir in data_dir.iterdir():
+        if tenant_dir.is_dir():
+            for f in tenant_dir.glob("*.md"):
+                datasets.append(f"{tenant_dir.name}/{f.name}")
+    return sorted(datasets)
 
 def get_selected_dataset():
     return session.get("selected_dataset", None)
@@ -193,7 +203,7 @@ def api_create_tenant():
     if not name:
         return jsonify({"error": "name is required"}), 400
     tenant = {
-        "tenant_id": name.lower().replace(" ", "-"),
+        "tenant_id":     data.get("tenant_id", name.lower().replace(" ", "-")).strip().lower().replace(" ", "-"),
         "id":            uuid4().hex[:12],
         "name":          name,
         "website":       website,
@@ -205,6 +215,9 @@ def api_create_tenant():
         "blocked":       False,
     }
     tenants = load_tenants()
+    tenant_id = data.get("tenant_id", name.lower().replace(" ", "-")).strip().lower().replace(" ", "-")
+    if any(t.get("tenant_id") == tenant_id for t in tenants):
+        return jsonify({"error": f"Tenant ID '{tenant_id}' already exists."}), 400
     tenants.append(tenant)
     save_tenants(tenants)
     return jsonify(tenant), 201
@@ -217,18 +230,50 @@ def api_delete_tenant(tenant_id):
         return jsonify({"error": "not found"}), 404
     updated = [t for t in tenants if t["id"] != tenant_id]
     save_tenants(updated)
+
+    tenant_slug = deleted_tenant.get("tenant_id") or deleted_tenant.get("name", "").lower().replace(" ", "-")
+
+    # Delete client account from SQLite
     try:
         from client_auth import get_db
-        tenant_name = deleted_tenant.get("name", "")
         with get_db() as conn:
-            conn.execute(
-                "DELETE FROM clients WHERE company_name = ?",
-                (tenant_name,)
-            )
+            conn.execute("DELETE FROM clients WHERE company_name = ? OR tenant_id = ?",
+                         (deleted_tenant.get("name", ""), tenant_slug))
             conn.commit()
     except Exception as e:
         print(f"[app.py] Could not delete client account: {e}")
-    return jsonify({"deleted": True})
+
+    # Delete chat histories
+    try:
+        for f in HISTORY_DIR.glob("chat_history_*.json"):
+            try:
+                import json as _json
+                d = _json.loads(f.read_text("utf-8"))
+                if d.get("api_key") == deleted_tenant.get("api_key"):
+                    f.unlink()
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"[app.py] Could not delete chat histories: {e}")
+
+    # Delete ChromaDB collection
+    try:
+        import chromadb
+        client = chromadb.PersistentClient(path="chroma")
+        client.delete_collection(tenant_slug)
+    except Exception as e:
+        print(f"[app.py] Could not delete ChromaDB collection: {e}")
+
+    # Delete data folder
+    try:
+        import shutil
+        data_dir = Path(DATA_PATH) / tenant_slug
+        if data_dir.exists():
+            shutil.rmtree(data_dir)
+    except Exception as e:
+        print(f"[app.py] Could not delete data folder: {e}")
+
+    return jsonify({"deleted": True})       
 
 @app.route("/api/tenants/<tenant_id>/regenerate-key", methods=["POST"])
 def api_regenerate_key(tenant_id):
@@ -355,8 +400,9 @@ def studio():
                 query,
                 chat_history=chat_history,
                 dataset_filter=selected,
-                collection_name=f"tenant_{get_active_tenant_id()}" if get_active_tenant_id() else None,
+                collection_name=get_active_tenant_id() if get_active_tenant_id() else None,
             )
+            append_chat_turn(query, result)
     return render_template("studio.html", result=result, query=query,
         chat_history=chat_history, ingest=ingest, url="", model=MODEL_NAME,
         datasets=get_available_datasets(get_active_tenant_id()), selected_dataset=get_selected_dataset())
@@ -398,8 +444,8 @@ def ingest_url():
     ingest = None
     try:
         tenant_id  = get_active_tenant_id()
-        data_path  = f"data/tenant_{tenant_id}" if tenant_id else DATA_PATH
-        collection = f"tenant_{tenant_id}" if tenant_id else "default"
+        data_path  = f"data/{tenant_id}" if tenant_id else DATA_PATH
+        collection = tenant_id if tenant_id else "default"
         os.makedirs(data_path, exist_ok=True)
         filename    = filename_from_url(url)
         saved_paths = scrape_full_website(url, filename)
@@ -428,8 +474,8 @@ def upload_file():
             raise ValueError("only PDF, Word, text, and Markdown files are supported")
         os.makedirs(DATA_PATH, exist_ok=True)
         tenant_id  = get_active_tenant_id()
-        data_path  = f"data/tenant_{tenant_id}" if tenant_id else DATA_PATH
-        collection = f"tenant_{tenant_id}" if tenant_id else "default"
+        data_path  = f"data/{tenant_id}" if tenant_id else DATA_PATH
+        collection = tenant_id if tenant_id else "default"
         os.makedirs(data_path, exist_ok=True)
         saved_path = save_upload_as_markdown(uploaded_file, original_name, data_path)
         documents  = load_documents(data_path)

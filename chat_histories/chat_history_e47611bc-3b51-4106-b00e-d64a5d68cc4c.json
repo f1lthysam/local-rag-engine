@@ -1,0 +1,17 @@
+{
+  "session_id": "e47611bc-3b51-4106-b00e-d64a5d68cc4c",
+  "source": "widget",
+  "created_at": "2026-06-11T04:33:50Z",
+  "updated_at": "2026-06-11T04:33:53Z",
+  "title": "What technologies do you use?",
+  "messages": [
+    {
+      "role": "user",
+      "content": "What technologies do you use?",
+      "timestamp": "2026-06-11T04:33:52Z"
+    }
+  ],
+  "turns": [],
+  "api_key": "ak_u9Z9P8gzphJ1Sff6UOAigMyg8jMUsajv",
+  "ended_at": "2026-06-11T04:33:53Z"
+}

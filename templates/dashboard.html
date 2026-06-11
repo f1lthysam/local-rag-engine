@@ -427,8 +427,9 @@
     <div class="modal-title">New Tenant</div>
     <div class="modal-sub">Each tenant gets a unique API key and a request limit.</div>
     <div class="form-group">
-      <label class="form-label">Client / Tenant Name *</label>
-      <input class="form-input" id="input-name" type="text" placeholder="e.g. Acme Store" autocomplete="off"/>
+      <label class="form-label">Tenant ID *</label>
+      <input class="form-input" id="input-name" type="text" placeholder="e.g. acme-store" autocomplete="off"/>
+      <div style="font-size:11px;color:var(--muted);margin-top:5px;">Lowercase, hyphens only. Must match client's registration ID.</div>
     </div>
     <div class="form-group">
       <label class="form-label">Website URL</label>
@@ -497,10 +498,11 @@
     const website = document.getElementById('input-website').value.trim();
     const notes   = document.getElementById('input-notes').value.trim();
     const limit   = parseInt(document.getElementById('input-limit').value) || 1000;
-    if (!name) { showToast('Name is required', 'error'); return; }
-    const res  = await fetch('/api/tenants', {
+    const tenantId = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    if (!name) { showToast('Tenant ID is required', 'error'); return; }
+    const res = await fetch('/api/tenants', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name, website, notes, request_limit: limit }),
+      body: JSON.stringify({ name, website, notes, request_limit: limit, tenant_id: tenantId }),
     });
     const data = await res.json();
     if (!res.ok) { showToast(data.error || 'Error creating tenant', 'error'); return; }
@@ -585,7 +587,7 @@
     const base = window.location.origin.replace(':5000', ':8000');
     const code =
 `<script>
-  window.AlianChatConfig = {
+  window.RagChatConfig = {
     apiBase:       '${base}',
     apiKey:        '${apiKey}',
     siteName:      '${name}',
